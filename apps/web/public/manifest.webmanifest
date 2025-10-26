@@ -1,0 +1,22 @@
+{
+  "name": "Event Organizer Scanner",
+  "short_name": "EO Scanner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#2979ff",
+  "description": "Scanner and operations console for event organizers.",
+  "lang": "id-ID",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

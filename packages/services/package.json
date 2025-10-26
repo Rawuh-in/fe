@@ -1,0 +1,18 @@
+{
+  "name": "@event-organizer/services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "ky": "^1.7.2",
+    "zod": "^3.23.8"
+  }
+}

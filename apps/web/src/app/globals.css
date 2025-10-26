@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@import "@event-organizer/ui/tokens.css";
+
+@theme inline {
+  --color-background: var(--eo-bg);
+  --color-foreground: var(--eo-fg);
+  --color-primary: var(--eo-primary);
+  --color-danger: var(--eo-danger);
+  --font-sans: var(--font-geist-sans, var(--eo-font-sans));
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--eo-bg);
+  color: var(--eo-fg);
+  font-family: var(--font-geist-sans, var(--eo-font-sans));
+  min-height: 100vh;
+}

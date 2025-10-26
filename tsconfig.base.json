@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "types": ["node"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@event-organizer/ui/*": ["packages/ui/src/*"],
+      "@event-organizer/config/*": ["packages/config/src/*"],
+      "@event-organizer/services/*": ["packages/services/src/*"]
+    }
+  },
+  "include": []
+}

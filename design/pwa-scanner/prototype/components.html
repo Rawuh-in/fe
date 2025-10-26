@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scanner Check-in — Components</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body {
+        background: var(--bg);
+        padding: var(--space-6);
+      }
+      .components-grid {
+        display: grid;
+        gap: var(--space-6);
+      }
+      .component-card {
+        background: var(--bg-elevated);
+        padding: var(--space-5);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xs);
+        display: grid;
+        gap: var(--space-4);
+      }
+      .component-card h2 {
+        margin: 0;
+        font-size: var(--text-md);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        align-items: center;
+      }
+      .swatch {
+        width: 96px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-size: var(--text-sm);
+      }
+      .stack {
+        display: grid;
+        gap: var(--space-3);
+      }
+      .modal-preview {
+        width: 320px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        display: grid;
+        place-items: center;
+      }
+      .modal-content {
+        background: var(--bg-elevated);
+        padding: var(--space-5);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        width: 100%;
+        display: grid;
+        gap: var(--space-3);
+      }
+      .toast-preview {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        width: 320px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="components-grid">
+      <section class="component-card">
+        <h2>Buttons</h2>
+        <div class="row">
+          <button class="btn btn-primary">Primary</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-destructive">Destructive</button>
+          <button class="btn-icon">
+            <span class="icon icon-camera"></span>
+            Kamera
+          </button>
+        </div>
+      </section>
+
+      <section class="component-card">
+        <h2>Inputs</h2>
+        <div class="stack">
+          <div class="field">
+            <label>Text</label>
+            <input type="text" placeholder="Nama/No. HP" />
+          </div>
+          <div class="field">
+            <label>Dropdown</label>
+            <div class="select">
+              <select>
+                <option>Venue A</option>
+                <option>Airport</option>
+                <option>Venue B</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="component-card">
+        <h2>Badges</h2>
+        <div class="row">
+          <span class="badge badge-stage">Stage · Venue A</span>
+          <span class="badge badge-status" data-status="ok">OK</span>
+          <span class="badge badge-status" data-status="dup">DUP</span>
+          <span class="badge badge-status" data-status="expired">EXPIRED</span>
+          <span class="badge badge-status" data-status="invalid">INVALID</span>
+          <span class="badge badge-status badge-manual" data-status="manual">Manual Verify</span>
+        </div>
+      </section>
+
+      <section class="component-card">
+        <h2>Banners</h2>
+        <div class="stack">
+          <div class="banner">
+            <span class="icon icon-offline"></span>
+            <span>Info umum banner</span>
+          </div>
+          <div class="banner banner-warning">
+            <span class="icon icon-offline"></span>
+            <span>Offline • 3 check-in akan dikirim saat online</span>
+          </div>
+          <div class="banner banner-error">
+            <span class="icon icon-offline"></span>
+            <span>Kamera tidak tersedia</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="component-card">
+        <h2>Cards</h2>
+        <article class="result-card" data-status="ok">
+          <div class="result-icon"></div>
+          <div class="result-heading">
+            <h3 class="result-title">Check-in Berhasil</h3>
+            <span class="badge badge-status" data-status="ok">OK</span>
+          </div>
+          <dl class="result-details">
+            <div>
+              <dt>Nama Peserta</dt>
+              <dd>Ayu Pratiwi</dd>
+            </div>
+            <div>
+              <dt>Event</dt>
+              <dd>Summit 2024</dd>
+            </div>
+            <div>
+              <dt>Stage</dt>
+              <dd>Venue A</dd>
+            </div>
+            <div>
+              <dt>Waktu</dt>
+              <dd>12.45 WIB</dd>
+            </div>
+          </dl>
+          <div class="result-actions">
+            <button class="btn btn-primary">Scan Berikutnya</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="component-card">
+        <h2>Modals</h2>
+        <div class="modal-preview">
+          <div class="modal-content">
+            <h3>Izinkan Kamera</h3>
+            <p>Kami memerlukan akses kamera untuk memindai QR. Buka pengaturan untuk mengaktifkan.</p>
+            <div class="row">
+              <button class="btn btn-primary">Buka Pengaturan</button>
+              <button class="btn btn-secondary">Masukkan Kode Manual</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="component-card">
+        <h2>Toasts</h2>
+        <div class="toast-preview">
+          <div class="toast" data-type="offline">
+            <span class="icon"></span>
+            <p>Tersimpan ke antrean offline</p>
+          </div>
+          <div class="toast" data-type="success">
+            <span class="icon"></span>
+            <p>Terkirim</p>
+          </div>
+          <div class="toast" data-type="error">
+            <span class="icon"></span>
+            <p>Kamera tidak tersedia</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="component-card">
+        <h2>Design Tokens</h2>
+        <div class="row">
+          <div class="swatch" style="background: var(--primary)">Primary</div>
+          <div class="swatch" style="background: var(--success)">Success</div>
+          <div class="swatch" style="background: var(--warning)">Warning</div>
+          <div class="swatch" style="background: var(--warning-strong)">Expired</div>
+          <div class="swatch" style="background: var(--danger)">Danger</div>
+          <div class="swatch" style="background: #4a5568">Muted</div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
+

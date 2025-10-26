@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scanner Check-in — Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/png" href="../assets/app-icon-192.png" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="debug">
+        <h1>Prototype Playground</h1>
+        <section>
+          <h2>Frame</h2>
+          <div class="debug-buttons">
+            <button data-action="show" data-target="home" class="btn btn-secondary">Home</button>
+            <button data-action="show" data-target="scan" class="btn btn-secondary">Scan</button>
+            <button data-action="show" data-target="manual" class="btn btn-secondary">Manual</button>
+            <button data-action="show" data-target="result-ok" class="btn btn-secondary">OK</button>
+            <button data-action="show" data-target="result-dup" class="btn btn-secondary">DUP</button>
+            <button data-action="show" data-target="result-expired" class="btn btn-secondary">Expired</button>
+            <button data-action="show" data-target="result-invalid" class="btn btn-secondary">Invalid</button>
+            <button data-action="show" data-target="result-hotel" class="btn btn-secondary">Hotel</button>
+          </div>
+        </section>
+        <section>
+          <h2>Simulasi</h2>
+          <div class="debug-group">
+            <label class="toggle">
+              <input type="checkbox" id="toggle-offline" />
+              <span>Offline Mode</span>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-dark" />
+              <span>Dark Mode</span>
+            </label>
+          </div>
+        </section>
+      </aside>
+      <main class="stage">
+        <div class="device">
+          <div class="status-toasts" aria-live="polite"></div>
+          <header class="app-header">
+            <div class="title">
+              <h1>Scanner Check-in</h1>
+              <span class="badge badge-stage" data-stage="Venue A">Stage · Venue A</span>
+            </div>
+            <div class="connection" data-connection="online">
+              <span class="dot"></span>
+              <span class="label">Online</span>
+            </div>
+          </header>
+          <div class="screens">
+            <section class="screen" data-screen="home" aria-label="Home">
+              <div class="field">
+                <label for="stage">Stage</label>
+                <div class="select">
+                  <select id="stage">
+                    <option>Venue A</option>
+                    <option>Airport</option>
+                    <option>Venue B</option>
+                    <option>Hotel</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" data-action="open-camera">
+                <span class="icon icon-camera"></span>
+                Buka Kamera
+              </button>
+              <div class="banner banner-warning hidden" data-banner="offline">
+                <span class="icon icon-offline"></span>
+                <span class="banner-text">Offline • 3 check-in akan dikirim saat online</span>
+              </div>
+              <a href="#" class="link" data-action="show-manual">Masukkan Kode Manual</a>
+            </section>
+
+            <section class="screen hidden" data-screen="scan" aria-label="Scan">
+              <div class="camera-preview">
+                <div class="scan-target"></div>
+                <p class="scan-status">Memindai…</p>
+              </div>
+              <div class="camera-actions">
+                <button class="btn-icon" data-action="toggle-flash" aria-label="Flash">
+                  <span class="icon icon-flash"></span>
+                  Flash
+                </button>
+                <button class="btn-icon" data-action="switch-camera" aria-label="Switch camera">
+                  <span class="icon icon-switch"></span>
+                  Kamera
+                </button>
+              </div>
+            </section>
+
+            <section class="screen hidden" data-screen="result" aria-label="Hasil Scan">
+              <article class="result-card" data-status="ok">
+                <div class="result-icon"></div>
+                <div class="result-heading">
+                  <h2 class="result-title">Check-in Berhasil</h2>
+                  <span class="badge badge-status" data-status="ok">OK</span>
+                </div>
+                <dl class="result-details">
+                  <div>
+                    <dt>Nama Peserta</dt>
+                    <dd data-field="name">Ayu Pratiwi</dd>
+                  </div>
+                  <div>
+                    <dt>Event</dt>
+                    <dd data-field="event">Summit 2024</dd>
+                  </div>
+                  <div>
+                    <dt>Stage</dt>
+                    <dd data-field="stage">Venue A</dd>
+                  </div>
+                  <div>
+                    <dt>Waktu</dt>
+                    <dd data-field="time">12.45 WIB</dd>
+                  </div>
+                  <div class="hotel-details hidden">
+                    <dt>Hotel</dt>
+                    <dd data-field="hotel">Grand Royale</dd>
+                    <dt>Nomor Kamar</dt>
+                    <dd data-field="room">1803</dd>
+                  </div>
+                </dl>
+                <p class="result-subtext hidden"></p>
+                <div class="result-actions">
+                  <button class="btn btn-primary" data-action="scan-next">Scan Berikutnya</button>
+                  <button class="btn btn-secondary hidden" data-action="scan-retry">Scan Ulang</button>
+                  <a href="#" class="link hidden" data-action="view-history">Lihat Riwayat</a>
+                  <button class="btn btn-secondary hidden" data-action="print-label">Cetak Label</button>
+                </div>
+              </article>
+            </section>
+
+            <section class="screen hidden" data-screen="manual" aria-label="Entry Manual">
+              <form class="card" data-form="manual">
+                <header>
+                  <h2>Verifikasi Manual</h2>
+                  <p>Masukkan Nama/No. HP, lalu pilih stage.</p>
+                </header>
+                <div class="field">
+                  <label for="manual-name">Nama/No. HP</label>
+                  <input id="manual-name" type="text" placeholder="Contoh: Budi / 08123456789" autocomplete="name" />
+                </div>
+                <div class="field">
+                  <label for="manual-stage">Stage</label>
+                  <div class="select">
+                    <select id="manual-stage">
+                      <option>Venue A</option>
+                      <option>Airport</option>
+                      <option>Venue B</option>
+                      <option>Hotel</option>
+                    </select>
+                  </div>
+                </div>
+                <button class="btn btn-primary" type="submit">Verifikasi Manual</button>
+              </form>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <template id="toast-template">
+      <div class="toast" role="status">
+        <span class="icon"></span>
+        <p></p>
+      </div>
+    </template>
+
+    <script src="scripts.js"></script>
+  </body>
+</html>

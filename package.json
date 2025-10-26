@@ -1,0 +1,33 @@
+{
+  "name": "event-organizer",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "dev": "cd apps/web && bun run dev",
+    "build": "cd apps/web && bun run build",
+    "start": "cd apps/web && bun run start",
+    "lint": "cd apps/web && bun run lint",
+    "typecheck": "cd apps/web && bun run typecheck",
+    "lint-staged": "lint-staged",
+    "format": "prettier --write \"{apps,packages}/**/*.{js,jsx,ts,tsx,md,mdx,json,css,scss}\"",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.4.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{ts,tsx,js,jsx,json,md,mdx,css,scss}": [
+      "prettier --write"
+    ]
+  }
+}

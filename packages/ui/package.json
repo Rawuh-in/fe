@@ -1,0 +1,28 @@
+{
+  "name": "@event-organizer/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./tokens": "./src/tokens.ts",
+    "./tokens.css": "./src/tokens.css",
+    "./components/button": "./src/components/button.tsx",
+    "./components/badge": "./src/components/badge.tsx"
+  },
+  "sideEffects": [
+    "./src/tokens.css"
+  ],
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1"
+  }
+}

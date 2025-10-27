@@ -6,7 +6,7 @@
   "assets": {
     "binding": "ASSETS",
     "directory": "apps/web/.vercel/output/static",
-    "html_handling": "worker"
+    "html_handling": "none"
   },
   "build": {
     "command": "npm --prefix apps/web run worker:build"

@@ -12,10 +12,8 @@
   "dependencies": {
     "@event-organizer/config": "file:../../packages/config",
     "@event-organizer/ui": "file:../../packages/ui",
-    "@prisma/client": "^6.18.0",
     "@types/uuid": "^10.0.0",
     "next": "15.5.6",
-    "prisma": "^6.18.0",
     "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",

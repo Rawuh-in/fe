@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
+type ParticipantCustomData = Record<string, unknown>
+
 interface Participant {
   id: string
   eventId: string
   userId: string
-  data: Record<string, any>
+  data: ParticipantCustomData
   eventName: string
   userName: string
   email?: string
@@ -83,10 +85,10 @@ export default function ParticipantsPage() {
   })
 
   const handleCreate = () => {
-    let customData = {}
+    let customData: ParticipantCustomData = {}
     try {
       customData = formData.customData ? JSON.parse(formData.customData) : {}
-    } catch (e) {
+    } catch {
       alert('Invalid JSON format for custom data')
       return
     }
@@ -137,10 +139,10 @@ export default function ParticipantsPage() {
   const handleUpdate = () => {
     if (!editingParticipant) return
 
-    let customData = {}
+    let customData: ParticipantCustomData = {}
     try {
       customData = formData.customData ? JSON.parse(formData.customData) : {}
-    } catch (e) {
+    } catch {
       alert('Invalid JSON format for custom data')
       return
     }
@@ -184,10 +186,10 @@ export default function ParticipantsPage() {
     setFormData({ eventId: '', userId: '', customData: '' })
   }
 
-  const renderCustomData = (data: Record<string, any>) => {
+  const renderCustomData = (data: ParticipantCustomData) => {
     if (!data || Object.keys(data).length === 0) return '-'
     return Object.entries(data)
-      .map(([key, value]) => `${key}: ${value}`)
+      .map(([key, value]) => `${key}: ${String(value)}`)
       .join(', ')
   }
 

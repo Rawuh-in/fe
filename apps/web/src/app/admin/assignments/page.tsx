@@ -17,6 +17,8 @@ interface Assignment {
 }
 
 // Mock data for assignments
+type AssignmentType = Assignment['assignmentType']
+
 const MOCK_ASSIGNMENTS: Assignment[] = [
   {
     id: '1',
@@ -117,22 +119,36 @@ const MOCK_PARTICIPANTS = [
 ]
 
 // Mock assignment options
-const ASSIGNMENT_OPTIONS = {
+const ASSIGNMENT_OPTIONS: Record<AssignmentType, string[]> = {
   hotel: ['Hotel A - Room 101', 'Hotel A - Room 102', 'Hotel B - Room 205', 'Hotel C - Suite 301'],
   meeting: ['Opening Ceremony', 'Workshop A', 'Workshop B', 'Keynote Speech', 'Product Demo', 'VIP Reception'],
   room: ['Meeting Room A', 'Meeting Room B', 'Auditorium', 'Conference Hall'],
 }
 
+const ASSIGNMENT_TYPES: AssignmentType[] = ['hotel', 'meeting', 'room']
+
+type AssignmentFormState = {
+  eventId: string
+  participantId: string
+  assignmentType: AssignmentType | ''
+  assignmentValue: string
+}
+
+const EMPTY_FORM_STATE: AssignmentFormState = {
+  eventId: '',
+  participantId: '',
+  assignmentType: '',
+  assignmentValue: '',
+}
+
+const isAssignmentType = (value: string): value is AssignmentType =>
+  ASSIGNMENT_TYPES.includes(value as AssignmentType)
+
 export default function AssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>(MOCK_ASSIGNMENTS)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
-  const [formData, setFormData] = useState({
-    eventId: '',
-    participantId: '',
-    assignmentType: '' as Assignment['assignmentType'],
-    assignmentValue: '',
-  })
+  const [formData, setFormData] = useState<AssignmentFormState>({ ...EMPTY_FORM_STATE })
 
   const handleCreate = () => {
     if (!formData.eventId || !formData.participantId || !formData.assignmentType || !formData.assignmentValue) {
@@ -163,7 +179,7 @@ export default function AssignmentsPage() {
 
     setAssignments([...assignments, newAssignment])
     setShowCreateForm(false)
-    setFormData({ eventId: '', participantId: '', assignmentType: '' as any, assignmentValue: '' })
+    setFormData({ ...EMPTY_FORM_STATE })
   }
 
   const handleEdit = (assignment: Assignment) => {
@@ -208,7 +224,7 @@ export default function AssignmentsPage() {
 
     setAssignments(updatedAssignments)
     setEditingAssignment(null)
-    setFormData({ eventId: '', participantId: '', assignmentType: '' as any, assignmentValue: '' })
+    setFormData({ ...EMPTY_FORM_STATE })
   }
 
   const handleDelete = (id: string) => {
@@ -244,7 +260,7 @@ export default function AssignmentsPage() {
   const resetForm = () => {
     setShowCreateForm(false)
     setEditingAssignment(null)
-    setFormData({ eventId: '', participantId: '', assignmentType: '' as any, assignmentValue: '' })
+    setFormData({ ...EMPTY_FORM_STATE })
   }
 
   const getFilteredParticipants = (eventId: string) => {
@@ -319,8 +335,12 @@ export default function AssignmentsPage() {
                       <select
                         required
                         value={formData.eventId}
-                        onChange={(e) => {
-                          setFormData({ ...formData, eventId: e.target.value, participantId: '' })
+                        onChange={(event) => {
+                          setFormData({
+                            ...formData,
+                            eventId: event.target.value,
+                            participantId: '',
+                          })
                         }}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       >
@@ -335,7 +355,9 @@ export default function AssignmentsPage() {
                       <select
                         required
                         value={formData.participantId}
-                        onChange={(e) => setFormData({ ...formData, participantId: e.target.value })}
+                        onChange={(event) =>
+                          setFormData({ ...formData, participantId: event.target.value })
+                        }
                         disabled={!formData.eventId}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                       >
@@ -350,7 +372,14 @@ export default function AssignmentsPage() {
                       <select
                         required
                         value={formData.assignmentType}
-                        onChange={(e) => setFormData({ ...formData, assignmentType: e.target.value as any, assignmentValue: '' })}
+                        onChange={(event) => {
+                          const { value } = event.target
+                          setFormData({
+                            ...formData,
+                            assignmentType: isAssignmentType(value) ? value : '',
+                            assignmentValue: '',
+                          })
+                        }}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">Select type...</option>

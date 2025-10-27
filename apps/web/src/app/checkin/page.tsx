@@ -3,8 +3,33 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 
+type AssignmentStatus = 'not_coming' | 'checked_in' | 'checked_out'
+type AssignmentType = 'hotel' | 'meeting'
+
+interface ParticipantAssignment {
+  id: number
+  type: AssignmentType
+  value: string
+  status: AssignmentStatus
+  checkinTime: string | null
+}
+
+interface Participant {
+  id: number
+  name: string
+  event: string
+  assignments: ParticipantAssignment[]
+}
+
+type AssignmentListItem = ParticipantAssignment & {
+  participantName: string
+  eventName: string
+}
+
+const formatTimestamp = () => new Date().toISOString().slice(0, 19).replace('T', ' ')
+
 // Mock data for participants and assignments
-const MOCK_PARTICIPANTS = [
+const MOCK_PARTICIPANTS: Participant[] = [
   {
     id: 1,
     name: 'John Doe',
@@ -35,8 +60,8 @@ const MOCK_PARTICIPANTS = [
   },
 ]
 
-const MOCK_ASSIGNMENTS = MOCK_PARTICIPANTS.flatMap((participant) =>
-  participant.assignments.map((assignment) => ({
+const MOCK_ASSIGNMENTS: AssignmentListItem[] = MOCK_PARTICIPANTS.flatMap((participant) =>
+  participant.assignments.map<AssignmentListItem>((assignment) => ({
     ...assignment,
     participantName: participant.name,
     eventName: participant.event,
@@ -45,33 +70,44 @@ const MOCK_ASSIGNMENTS = MOCK_PARTICIPANTS.flatMap((participant) =>
 
 export default function CheckInPage() {
   const [selectedEvent, setSelectedEvent] = useState('Tech Conference 2025')
-  const [scanMode, setScanMode] = useState<'manual' | 'camera'>('manual')
   const [manualCode, setManualCode] = useState('')
   const [scanResult, setScanResult] = useState<string | null>(null)
-  const [lastScanned, setLastScanned] = useState<any>(null)
-  const [assignments, setAssignments] = useState(MOCK_ASSIGNMENTS)
+  const [lastScanned, setLastScanned] = useState<AssignmentListItem | null>(null)
+  const [assignments, setAssignments] = useState<AssignmentListItem[]>(MOCK_ASSIGNMENTS)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleManualScan = () => {
     // Simulate scanning assignment IDs
-    const assignmentId = parseInt(manualCode)
-    const assignment = assignments.find(a => a.id === assignmentId)
+    const assignmentId = Number.parseInt(manualCode, 10)
+    if (Number.isNaN(assignmentId)) {
+      setScanResult(`❌ Assignment not found with ID: ${manualCode}`)
+      setManualCode('')
+      return
+    }
+
+    const assignment = assignments.find(candidate => candidate.id === assignmentId)
 
     if (assignment) {
       // Simulate check-in
-      setAssignments(prev => prev.map(a =>
-        a.id === assignmentId
-          ? { ...a, status: 'checked_in', checkinTime: new Date().toISOString().slice(0, 19).replace('T', ' ') }
-          : a
-      ))
+      const checkinTime = formatTimestamp()
+
+      setAssignments(prevAssignments =>
+        prevAssignments.map(item =>
+          item.id === assignmentId
+            ? {
+                ...item,
+                status: 'checked_in',
+                checkinTime,
+              }
+            : item
+        )
+      )
 
       setLastScanned({
         ...assignment,
-        participantName: assignment.participantName,
-        value: assignment.value,
         status: 'checked_in',
-        checkinTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        checkinTime,
       })
 
       setScanResult(`✅ Successfully checked in ${assignment.participantName} for ${assignment.value}`)
@@ -93,19 +129,27 @@ export default function CheckInPage() {
 
         try {
           const parsed = JSON.parse(mockQrData)
-          const assignment = assignments.find(a => a.id === parsed.assignmentId)
+          const assignment = assignments.find(item => item.id === parsed.assignmentId)
 
           if (assignment) {
-            setAssignments(prev => prev.map(a =>
-              a.id === parsed.assignmentId
-                ? { ...a, status: 'checked_in', checkinTime: new Date().toISOString().slice(0, 19).replace('T', ' ') }
-                : a
-            ))
+            const checkinTime = formatTimestamp()
+
+            setAssignments(prevAssignments =>
+              prevAssignments.map(item =>
+                item.id === parsed.assignmentId
+                  ? {
+                      ...item,
+                      status: 'checked_in',
+                      checkinTime,
+                    }
+                  : item
+              )
+            )
 
             setLastScanned({
               ...assignment,
               status: 'checked_in',
-              checkinTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
+              checkinTime,
             })
 
             setScanResult(`✅ QR Code scanned: ${assignment.participantName} checked in for ${assignment.value}`)
@@ -120,7 +164,7 @@ export default function CheckInPage() {
     }
   }
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusBadgeClass = (status: AssignmentStatus) => {
     switch (status) {
       case 'checked_in': return 'bg-green-100 text-green-800'
       case 'checked_out': return 'bg-blue-100 text-blue-800'

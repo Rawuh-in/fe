@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "event-organizer-web",
+  "name": "rawuhin",
   "main": "apps/web/.vercel/output/static/_worker.js/index.js",
   "compatibility_date": "2025-10-27",
   "assets": {

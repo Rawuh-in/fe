@@ -151,13 +151,15 @@ export default function AssignmentsPage() {
   const [formData, setFormData] = useState<AssignmentFormState>({ ...EMPTY_FORM_STATE })
 
   const handleCreate = () => {
-    if (!formData.eventId || !formData.participantId || !formData.assignmentType || !formData.assignmentValue) {
+    const { eventId, participantId, assignmentType, assignmentValue } = formData
+
+    if (!eventId || !participantId || !assignmentType || !assignmentValue) {
       alert('Please fill in all fields')
       return
     }
 
-    const selectedEvent = MOCK_EVENTS.find(e => e.id === formData.eventId)
-    const selectedParticipant = MOCK_PARTICIPANTS.find(p => p.id === formData.participantId)
+    const selectedEvent = MOCK_EVENTS.find(e => e.id === eventId)
+    const selectedParticipant = MOCK_PARTICIPANTS.find(p => p.id === participantId)
 
     if (!selectedEvent || !selectedParticipant) {
       alert('Invalid event or participant selection')
@@ -166,10 +168,10 @@ export default function AssignmentsPage() {
 
     const newAssignment: Assignment = {
       id: Date.now().toString(),
-      eventId: formData.eventId,
-      participantId: formData.participantId,
-      assignmentType: formData.assignmentType,
-      assignmentValue: formData.assignmentValue,
+      eventId,
+      participantId,
+      assignmentType,
+      assignmentValue,
       checkinStatus: 'not_coming',
       checkinTimestamp: undefined,
       checkoutTimestamp: undefined,
@@ -195,13 +197,15 @@ export default function AssignmentsPage() {
   const handleUpdate = () => {
     if (!editingAssignment) return
 
-    if (!formData.eventId || !formData.participantId || !formData.assignmentType || !formData.assignmentValue) {
+    const { eventId, participantId, assignmentType, assignmentValue } = formData
+
+    if (!eventId || !participantId || !assignmentType || !assignmentValue) {
       alert('Please fill in all fields')
       return
     }
 
-    const selectedEvent = MOCK_EVENTS.find(e => e.id === formData.eventId)
-    const selectedParticipant = MOCK_PARTICIPANTS.find(p => p.id === formData.participantId)
+    const selectedEvent = MOCK_EVENTS.find(e => e.id === eventId)
+    const selectedParticipant = MOCK_PARTICIPANTS.find(p => p.id === participantId)
 
     if (!selectedEvent || !selectedParticipant) {
       alert('Invalid event or participant selection')
@@ -212,10 +216,10 @@ export default function AssignmentsPage() {
       assignment.id === editingAssignment.id
         ? {
             ...assignment,
-            eventId: formData.eventId,
-            participantId: formData.participantId,
-            assignmentType: formData.assignmentType,
-            assignmentValue: formData.assignmentValue,
+            eventId,
+            participantId,
+            assignmentType,
+            assignmentValue,
             participantName: selectedParticipant.name,
             eventName: selectedEvent.name,
           }

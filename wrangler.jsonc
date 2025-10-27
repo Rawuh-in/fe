@@ -1,6 +1,14 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "event-organizer-web",
+  "main": "apps/web/.vercel/output/static/_worker.js/index.js",
   "compatibility_date": "2025-10-27",
-  "pages_build_output_dir": "apps/web/.vercel/output/static"
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "apps/web/.vercel/output/static",
+    "html_handling": "worker"
+  },
+  "build": {
+    "command": "npm --prefix apps/web run worker:build"
+  }
 }

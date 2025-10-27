@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "preview": "npm run pages:build && wrangler pages dev",
+    "deploy": "npm run pages:build && wrangler pages deploy",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
@@ -13,7 +16,7 @@
     "@event-organizer/config": "file:../../packages/config",
     "@event-organizer/ui": "file:../../packages/ui",
     "@types/uuid": "^10.0.0",
-    "next": "^14.2.0",
+    "next": "15.5.2",
     "qrcode": "^1.5.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -21,6 +24,7 @@
     "workbox-window": "^7.3.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -29,6 +33,8 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^39.2.5",
+    "wrangler": "^3"
   }
 }

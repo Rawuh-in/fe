@@ -1,0 +1,4 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "event-organizer-web"
+compatibility_date = "2025-10-27"
+pages_build_output_dir = ".vercel/output/static"

@@ -1,4 +1,9 @@
-#!/usr/bin/env sh
+echo "husky - DEPRECATED
 
-# Mimic husky shim to ensure local binaries are on PATH when hooks run.
-export PATH="$(dirname -- "$0")/../../node_modules/.bin:$PATH"
+Please remove the following two lines from $0:
+
+#!/usr/bin/env sh
+. \"\$(dirname -- \"\$0\")/_/husky.sh\"
+
+They WILL FAIL in v10.0.0
+"

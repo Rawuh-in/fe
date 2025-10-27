@@ -1,7 +1,9 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState } from 'react';
+import Link from 'next/link';
+
+// Test comment for lint-staged
 
 // Mock data
 const MOCK_STATS = {
@@ -9,7 +11,7 @@ const MOCK_STATS = {
   users: 127,
   participants: 89,
   assignments: 156,
-}
+};
 
 const MOCK_EVENTS = [
   {
@@ -39,23 +41,23 @@ const MOCK_EVENTS = [
     assignments: 44,
     options: 8,
   },
-]
+];
 
 export default function Dashboard() {
-  const [showEventModal, setShowEventModal] = useState(false)
+  const [showEventModal, setShowEventModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
     name: '',
     startDate: '',
     endDate: '',
-  })
+  });
 
   const handleCreateEvent = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Simulate API call
-    console.log('Creating event:', newEvent)
-    setShowEventModal(false)
-    setNewEvent({ name: '', startDate: '', endDate: '' })
-  }
+    console.log('Creating event:', newEvent);
+    setShowEventModal(false);
+    setNewEvent({ name: '', startDate: '', endDate: '' });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,16 +71,28 @@ export default function Dashboard() {
                 </Link>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link href="/" className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link
+                  href="/"
+                  className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
                   Dashboard
                 </Link>
-                <Link href="/admin/events" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link
+                  href="/admin/events"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
                   Events
                 </Link>
-                <Link href="/admin/users" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link
+                  href="/admin/users"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
                   Users
                 </Link>
-                <Link href="/checkin" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link
+                  href="/checkin"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
                   Check-in
                 </Link>
               </div>
@@ -90,8 +104,12 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Event Organizer Dashboard</h1>
-            <p className="mt-2 text-gray-600">Manage events, participants, and check-ins efficiently</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Event Organizer Dashboard
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Manage events, participants, and check-ins efficiently
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -124,7 +142,9 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Participants</h3>
-                  <p className="text-3xl font-bold text-purple-600">{MOCK_STATS.participants}</p>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {MOCK_STATS.participants}
+                  </p>
                 </div>
               </div>
             </div>
@@ -135,7 +155,9 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Assignments</h3>
-                  <p className="text-3xl font-bold text-orange-600">{MOCK_STATS.assignments}</p>
+                  <p className="text-3xl font-bold text-orange-600">
+                    {MOCK_STATS.assignments}
+                  </p>
                 </div>
               </div>
             </div>
@@ -159,9 +181,12 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">{event.name}</h3>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {event.name}
+                          </h3>
                           <p className="text-sm text-gray-600">
-                            {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
+                            {new Date(event.startDate).toLocaleDateString()} -{' '}
+                            {new Date(event.endDate).toLocaleDateString()}
                           </p>
                           <div className="mt-2 flex space-x-4 text-sm text-gray-500">
                             <span>{event.participants} participants</span>
@@ -184,9 +209,7 @@ export default function Dashboard() {
                       >
                         Manage Assignments
                       </Link>
-                      <button
-                        className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors"
-                      >
+                      <button className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
                         Delete
                       </button>
                     </div>
@@ -203,8 +226,12 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">Manage Events</h3>
-                  <p className="mt-1 text-gray-600">Create and configure events with custom fields</p>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                    Manage Events
+                  </h3>
+                  <p className="mt-1 text-gray-600">
+                    Create and configure events with custom fields
+                  </p>
                 </div>
                 <span className="text-3xl">📅</span>
               </div>
@@ -216,7 +243,9 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600">Manage Users</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600">
+                    Manage Users
+                  </h3>
                   <p className="mt-1 text-gray-600">Add and manage user profiles</p>
                 </div>
                 <span className="text-3xl">👥</span>
@@ -229,8 +258,12 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600">Manage Participants</h3>
-                  <p className="mt-1 text-gray-600">Add users to events with custom data</p>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600">
+                    Manage Participants
+                  </h3>
+                  <p className="mt-1 text-gray-600">
+                    Add users to events with custom data
+                  </p>
                 </div>
                 <span className="text-3xl">🎫</span>
               </div>
@@ -242,7 +275,9 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600">Manage Assignments</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600">
+                    Manage Assignments
+                  </h3>
                   <p className="mt-1 text-gray-600">Assign hotels, meetings, and rooms</p>
                 </div>
                 <span className="text-3xl">🏨</span>
@@ -255,7 +290,9 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">QR Code Management</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
+                    QR Code Management
+                  </h3>
                   <p className="mt-1 text-gray-600">Generate and manage QR codes</p>
                 </div>
                 <span className="text-3xl">📱</span>
@@ -268,7 +305,9 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600">Check-in Station</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600">
+                    Check-in Station
+                  </h3>
                   <p className="mt-1 text-gray-600">Scan QR codes for check-in/out</p>
                 </div>
                 <span className="text-3xl">✅</span>
@@ -285,7 +324,9 @@ export default function Dashboard() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Event</h3>
               <form onSubmit={handleCreateEvent} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Event Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Event Name
+                  </label>
                   <input
                     type="text"
                     required
@@ -295,22 +336,30 @@ export default function Dashboard() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Start Date
+                  </label>
                   <input
                     type="datetime-local"
                     required
                     value={newEvent.startDate}
-                    onChange={(e) => setNewEvent({ ...newEvent, startDate: e.target.value })}
+                    onChange={(e) =>
+                      setNewEvent({ ...newEvent, startDate: e.target.value })
+                    }
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">End Date</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    End Date
+                  </label>
                   <input
                     type="datetime-local"
                     required
                     value={newEvent.endDate}
-                    onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+                    onChange={(e) =>
+                      setNewEvent({ ...newEvent, endDate: e.target.value })
+                    }
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>

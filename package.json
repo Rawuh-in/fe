@@ -15,7 +15,7 @@
     "typecheck": "cd apps/web && bun run typecheck",
     "lint-staged": "lint-staged",
     "format": "prettier --write \"{apps,packages}/**/*.{js,jsx,ts,tsx,md,mdx,json,css,scss}\"",
-    "prepare": "husky install"
+    "prepare": "if command -v husky >/dev/null 2>&1; then husky install; fi"
   },
   "devDependencies": {
     "husky": "^9.1.6",

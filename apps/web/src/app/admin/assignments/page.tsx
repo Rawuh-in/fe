@@ -153,7 +153,7 @@ export default function AssignmentsPage() {
   const handleCreate = () => {
     const { eventId, participantId, assignmentType, assignmentValue } = formData
 
-    if (!eventId || !participantId || !assignmentType || !assignmentValue) {
+    if (!eventId || !participantId || !assignmentValue || !isAssignmentType(assignmentType)) {
       alert('Please fill in all fields')
       return
     }
@@ -199,7 +199,7 @@ export default function AssignmentsPage() {
 
     const { eventId, participantId, assignmentType, assignmentValue } = formData
 
-    if (!eventId || !participantId || !assignmentType || !assignmentValue) {
+    if (!eventId || !participantId || !assignmentValue || !isAssignmentType(assignmentType)) {
       alert('Please fill in all fields')
       return
     }

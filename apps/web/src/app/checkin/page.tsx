@@ -35,16 +35,13 @@ const MOCK_PARTICIPANTS = [
   },
 ]
 
-const MOCK_ASSIGNMENTS = [
-  ...MOCK_PARTICIPANTS[0].assignments,
-  ...MOCK_PARTICIPANTS[1].assignments,
-  ...MOCK_PARTICIPANTS[2].assignments,
-].map(assignment => ({
-  id: assignment.id,
-  participantName: MOCK_PARTICIPANTS.find(p => p.assignments.some(a => a.id === assignment.id))?.name || 'Unknown',
-  eventName: MOCK_PARTICIPANTS.find(p => p.assignments.some(a => a.id === assignment.id))?.event || 'Unknown',
-  ...assignment,
-}))
+const MOCK_ASSIGNMENTS = MOCK_PARTICIPANTS.flatMap((participant) =>
+  participant.assignments.map((assignment) => ({
+    ...assignment,
+    participantName: participant.name,
+    eventName: participant.event,
+  }))
+)
 
 export default function CheckInPage() {
   const [selectedEvent, setSelectedEvent] = useState('Tech Conference 2025')

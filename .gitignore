@@ -11,7 +11,10 @@ dist/
 build/
 
 # env files
-.env*
+.env
+.env.local
+.env.*.local
+!.env.example
 
 # misc
 .DS_Store

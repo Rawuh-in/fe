@@ -15,6 +15,7 @@
   "dependencies": {
     "@event-organizer/config": "file:../../packages/config",
     "@event-organizer/ui": "file:../../packages/ui",
+    "@tanstack/react-query": "^5.90.6",
     "@types/uuid": "^10.0.0",
     "next": "15.5.2",
     "qrcode": "^1.5.4",

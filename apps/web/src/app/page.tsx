@@ -2,10 +2,28 @@
 
 import Link from 'next/link';
 import { useEvents, useUsers, parseEventOptions } from '@event-organizer/services';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Dashboard() {
+  const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { data: eventsData, isLoading: eventsLoading } = useEvents({ limit: 10, sort: 'created_at', dir: 'desc' });
   const { data: usersData, isLoading: usersLoading } = useUsers({ limit: 1 }); // Just for count
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect to login
+  }
 
   // Calculate statistics from real data
   const stats = {
@@ -56,6 +74,14 @@ export default function Dashboard() {
                   Check-in
                 </Link>
               </div>
+            </div>
+            <div className="flex items-center">
+              <button
+                onClick={logout}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

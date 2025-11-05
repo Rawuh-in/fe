@@ -248,7 +248,7 @@ curl https://be-service-0f01851c6cbd.herokuapp.com/1/events/list
 
 **Current Workaround:**
 Frontend is configured to accept auth token via:
-- `.env.local`: `VITE_AUTH_TOKEN=<token>`
+- `.env.local`: `NEXT_PUBLIC_AUTH_TOKEN=<token>`
 - Or localStorage after successful login
 
 ---
@@ -258,8 +258,8 @@ Frontend is configured to accept auth token via:
 ### Environment Setup
 **File:** `.env.local` (not in git)
 ```bash
-VITE_API_BASE_URL=https://be-service-0f01851c6cbd.herokuapp.com
-VITE_AUTH_TOKEN=  # Needs valid token after auth is fixed
+NEXT_PUBLIC_API_BASE_URL=https://be-service-0f01851c6cbd.herokuapp.com
+NEXT_PUBLIC_AUTH_TOKEN=  # Needs valid token after auth is fixed
 ```
 
 ### API Client

@@ -165,20 +165,17 @@ export interface ListQueryParams {
 // ============================================================================
 
 const getBaseUrl = (): string => {
-  // Check for environment variable (Vite uses VITE_ prefix)
-  if (typeof window !== "undefined") {
-    return import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-  }
-  return process.env.VITE_API_BASE_URL || "http://localhost:8080";
+  // Next.js uses NEXT_PUBLIC_ prefix for client-side env vars
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 };
 
 const getAuthToken = (): string | null => {
   // For now, hardcode or read from localStorage
   // TODO: Implement proper auth flow
   if (typeof window !== "undefined") {
-    return localStorage.getItem("authToken") || import.meta.env.VITE_AUTH_TOKEN || null;
+    return localStorage.getItem("authToken") || process.env.NEXT_PUBLIC_AUTH_TOKEN || null;
   }
-  return process.env.VITE_AUTH_TOKEN || null;
+  return process.env.NEXT_PUBLIC_AUTH_TOKEN || null;
 };
 
 const defaultHeaders = {

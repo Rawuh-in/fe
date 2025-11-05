@@ -1,63 +1,23 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-
-// Test comment for lint-staged
-
-// Mock data
-const MOCK_STATS = {
-  events: 5,
-  users: 127,
-  participants: 89,
-  assignments: 156,
-};
-
-const MOCK_EVENTS = [
-  {
-    id: '1',
-    name: 'Tech Conference 2025',
-    startDate: '2025-03-15',
-    endDate: '2025-03-17',
-    participants: 45,
-    assignments: 78,
-    options: 12,
-  },
-  {
-    id: '2',
-    name: 'Product Launch Event',
-    startDate: '2025-04-20',
-    endDate: '2025-04-20',
-    participants: 23,
-    assignments: 34,
-    options: 5,
-  },
-  {
-    id: '3',
-    name: 'Annual Meeting',
-    startDate: '2025-05-10',
-    endDate: '2025-05-12',
-    participants: 21,
-    assignments: 44,
-    options: 8,
-  },
-];
+import { useEvents, useUsers, parseEventOptions } from '@event-organizer/services';
 
 export default function Dashboard() {
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    name: '',
-    startDate: '',
-    endDate: '',
-  });
+  const { data: eventsData, isLoading: eventsLoading } = useEvents({ limit: 10, sort: 'created_at', dir: 'desc' });
+  const { data: usersData, isLoading: usersLoading } = useUsers({ limit: 1 }); // Just for count
 
-  const handleCreateEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate API call
-    console.log('Creating event:', newEvent);
-    setShowEventModal(false);
-    setNewEvent({ name: '', startDate: '', endDate: '' });
+  // Calculate statistics from real data
+  const stats = {
+    events: eventsData?.Pagination?.TotalData || 0,
+    users: usersData?.Pagination?.TotalData || 0,
+    // Note: Guests count would need to aggregate across all events
+    // For now, we'll show a placeholder
+    guests: '—',
+    assignments: '—'
   };
+
+  const isLoading = eventsLoading || usersLoading;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,10 +68,11 @@ export default function Dashboard() {
               Event Organizer Dashboard
             </h1>
             <p className="mt-2 text-gray-600">
-              Manage events, participants, and check-ins efficiently
+              Manage events, guests, and check-ins efficiently
             </p>
           </div>
 
+          {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
@@ -120,7 +81,9 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Events</h3>
-                  <p className="text-3xl font-bold text-blue-600">{MOCK_STATS.events}</p>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {isLoading ? '...' : stats.events}
+                  </p>
                 </div>
               </div>
             </div>
@@ -130,8 +93,10 @@ export default function Dashboard() {
                   <span className="text-2xl">👥</span>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Users</h3>
-                  <p className="text-3xl font-bold text-green-600">{MOCK_STATS.users}</p>
+                  <h3 className="text-lg font-medium text-gray-900">Staff Users</h3>
+                  <p className="text-3xl font-bold text-green-600">
+                    {isLoading ? '...' : stats.users}
+                  </p>
                 </div>
               </div>
             </div>
@@ -141,10 +106,11 @@ export default function Dashboard() {
                   <span className="text-2xl">🎫</span>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Participants</h3>
+                  <h3 className="text-lg font-medium text-gray-900">Guests</h3>
                   <p className="text-3xl font-bold text-purple-600">
-                    {MOCK_STATS.participants}
+                    {stats.guests}
                   </p>
+                  <small className="text-xs text-gray-500">Select event to view</small>
                 </div>
               </div>
             </div>
@@ -156,69 +122,88 @@ export default function Dashboard() {
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Assignments</h3>
                   <p className="text-3xl font-bold text-orange-600">
-                    {MOCK_STATS.assignments}
+                    {stats.assignments}
                   </p>
+                  <small className="text-xs text-gray-500">In guest data</small>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Recent Events */}
           <div className="mb-6 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900">Recent Events</h2>
-            <button
-              onClick={() => setShowEventModal(true)}
+            <Link
+              href="/admin/events"
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
-              Create Event
-            </button>
+              Manage Events
+            </Link>
           </div>
 
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {MOCK_EVENTS.map((event) => (
-                <li key={event.id} className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2 text-gray-500">Loading events...</p>
+              </div>
+            ) : eventsData?.Data && eventsData.Data.length > 0 ? (
+              <ul className="divide-y divide-gray-200">
+                {eventsData.Data.map((event) => {
+                  const options = parseEventOptions(event.Options);
+                  return (
+                    <li key={event.ID} className="px-6 py-4">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {event.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {new Date(event.startDate).toLocaleDateString()} -{' '}
-                            {new Date(event.endDate).toLocaleDateString()}
-                          </p>
-                          <div className="mt-2 flex space-x-4 text-sm text-gray-500">
-                            <span>{event.participants} participants</span>
-                            <span>{event.assignments} assignments</span>
-                            <span>{event.options} options</span>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">
+                                {event.EventName}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {event.Description || 'No description'}
+                              </p>
+                              <div className="mt-2 flex space-x-4 text-sm text-gray-500">
+                                <span>
+                                  {options.Hotels?.length || 0} hotels
+                                </span>
+                                <span>
+                                  {options.Rooms?.length || 0} rooms
+                                </span>
+                                <span>
+                                  Created {new Date(event.CreatedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
+                        <div className="flex space-x-3">
+                          <Link
+                            href={`/admin/participants`}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
+                          >
+                            Manage Guests
+                          </Link>
+                          <Link
+                            href={`/qr`}
+                            className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors"
+                          >
+                            QR Codes
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex space-x-3">
-                      <Link
-                        href={`/admin/participants?eventId=${event.id}`}
-                        className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
-                      >
-                        Manage Participants
-                      </Link>
-                      <Link
-                        href={`/admin/assignments?eventId=${event.id}`}
-                        className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors"
-                      >
-                        Manage Assignments
-                      </Link>
-                      <button className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No events found. Create your first event!
+              </div>
+            )}
           </div>
 
+          {/* Quick Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             <Link
               href="/admin/events"
@@ -230,7 +215,7 @@ export default function Dashboard() {
                     Manage Events
                   </h3>
                   <p className="mt-1 text-gray-600">
-                    Create and configure events with custom fields
+                    Create and configure events with hotels/rooms
                   </p>
                 </div>
                 <span className="text-3xl">📅</span>
@@ -244,9 +229,9 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600">
-                    Manage Users
+                    Manage Staff Users
                   </h3>
-                  <p className="mt-1 text-gray-600">Add and manage user profiles</p>
+                  <p className="mt-1 text-gray-600">Add system administrators and staff</p>
                 </div>
                 <span className="text-3xl">👥</span>
               </div>
@@ -259,10 +244,10 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600">
-                    Manage Participants
+                    Manage Guests
                   </h3>
                   <p className="mt-1 text-gray-600">
-                    Add users to events with custom data
+                    Add event guests with custom data
                   </p>
                 </div>
                 <span className="text-3xl">🎫</span>
@@ -276,9 +261,9 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600">
-                    Manage Assignments
+                    View Assignments
                   </h3>
-                  <p className="mt-1 text-gray-600">Assign hotels, meetings, and rooms</p>
+                  <p className="mt-1 text-gray-600">Guest hotel and room assignments</p>
                 </div>
                 <span className="text-3xl">🏨</span>
               </div>
@@ -293,7 +278,7 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
                     QR Code Management
                   </h3>
-                  <p className="mt-1 text-gray-600">Generate and manage QR codes</p>
+                  <p className="mt-1 text-gray-600">Generate and download QR codes</p>
                 </div>
                 <span className="text-3xl">📱</span>
               </div>
@@ -308,7 +293,7 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600">
                     Check-in Station
                   </h3>
-                  <p className="mt-1 text-gray-600">Scan QR codes for check-in/out</p>
+                  <p className="mt-1 text-gray-600">Scan QR codes for guest check-in</p>
                 </div>
                 <span className="text-3xl">✅</span>
               </div>
@@ -316,73 +301,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-
-      {showEventModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Event</h3>
-              <form onSubmit={handleCreateEvent} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Event Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newEvent.name}
-                    onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Start Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={newEvent.startDate}
-                    onChange={(e) =>
-                      setNewEvent({ ...newEvent, startDate: e.target.value })
-                    }
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    End Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={newEvent.endDate}
-                    onChange={(e) =>
-                      setNewEvent({ ...newEvent, endDate: e.target.value })
-                    }
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Create Event
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowEventModal(false)}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -225,13 +225,37 @@ export function useLogin() {
   return useMutation({
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       authApi.login(username, password),
-    onSuccess: (data: LoginResponse) => {
-      // Store the token
-      if (typeof window !== "undefined") {
-        localStorage.setItem("authToken", data.Data.AccessToken);
+    onSuccess: (data: any) => {
+      console.log('Login response:', data);
+
+      // Handle different possible response structures
+      let token: string | null = null;
+
+      if (data?.Data?.AccessToken) {
+        // Expected structure: { Data: { AccessToken: "..." } }
+        token = data.Data.AccessToken;
+      } else if (data?.AccessToken) {
+        // Alternative: { AccessToken: "..." }
+        token = data.AccessToken;
+      } else if (data?.access_token) {
+        // Alternative: { access_token: "..." }
+        token = data.access_token;
+      } else if (data?.token) {
+        // Alternative: { token: "..." }
+        token = data.token;
+      } else if (typeof data === 'string') {
+        // Response is just a token string
+        token = data;
       }
-      // Invalidate all queries to refetch with new auth
-      queryClient.invalidateQueries();
+
+      if (token && typeof window !== "undefined") {
+        localStorage.setItem("authToken", token);
+        // Invalidate all queries to refetch with new auth
+        queryClient.invalidateQueries();
+      } else {
+        console.error('Could not extract token from response:', data);
+        throw new Error('Login succeeded but token not found in response');
+      }
     }
   });
 }

@@ -66,11 +66,14 @@ export default function ParticipantsPage() {
       }
 
       await createGuest.mutateAsync({
-        guestName: formData.Name,
-        email: formData.Email || undefined,
-        phoneNumber: formData.Phone || undefined,
-        customData: stringifyGuestOptions(options),
-        eventID: selectedEventId,
+        eventId: selectedEventId,
+        data: {
+          guestName: formData.Name,
+          email: formData.Email || undefined,
+          phoneNumber: formData.Phone || undefined,
+          customData: stringifyGuestOptions(options),
+          eventID: selectedEventId,
+        },
       });
 
       resetForm();
@@ -111,6 +114,7 @@ export default function ParticipantsPage() {
       }
 
       await updateGuest.mutateAsync({
+        eventId: selectedEventId,
         guestId: editingGuest.ID!,
         data: {
           guestName: formData.Name,
@@ -131,7 +135,7 @@ export default function ParticipantsPage() {
     if (!confirm('Are you sure you want to remove this guest from the event?')) return;
 
     try {
-      await deleteGuest.mutateAsync(guestId);
+      await deleteGuest.mutateAsync({ eventId: selectedEventId, guestId });
     } catch (err) {
       console.error('Delete error:', err);
       alert('Failed to delete guest. Please check console for details.');

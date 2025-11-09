@@ -1,20 +1,18 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
 import { appConfig } from '@event-organizer/config';
 import { ClientProviders } from './providers/client-providers';
 import './globals.css';
 
-const geistSans = Geist({
+// Using system fonts as fallback due to network constraints
+const geistSans = {
   variable: '--font-geist-sans',
-  subsets: ['latin'],
-  display: 'swap',
-});
+  className: 'font-sans',
+};
 
-const geistMono = Geist_Mono({
+const geistMono = {
   variable: '--font-geist-mono',
-  subsets: ['latin'],
-  display: 'swap',
-});
+  className: 'font-mono',
+};
 
 export const metadata: Metadata = {
   title: `${appConfig.appName} Console`,

@@ -4,17 +4,19 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { eventApi, guestApi, userApi, authApi } from './index';
+import { eventApi, guestApi, userApi, authApi, projectApi } from './index';
 import type {
   ApiListResponse,
   ApiResponse,
   CreateEventRequest,
   CreateGuestRequest,
   CreateUserRequest,
+  CurrentUserResponse,
   Event,
   Guest,
   ListQueryParams,
   LoginResponse,
+  Project,
   UpdateEventRequest,
   UpdateGuestRequest,
   UpdateUserRequest,
@@ -41,6 +43,13 @@ export const queryKeys = {
     all: ['users'] as const,
     lists: () => [...queryKeys.users.all, 'list'] as const,
     list: (params?: ListQueryParams) => [...queryKeys.users.lists(), params] as const,
+  },
+  auth: {
+    me: ['auth', 'me'] as const,
+  },
+  projects: {
+    all: ['projects'] as const,
+    lists: () => [...queryKeys.projects.all, 'list'] as const,
   },
 };
 
@@ -252,14 +261,36 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      // Clear token
+      // Clear token and project
       if (typeof window !== 'undefined') {
         localStorage.removeItem('authToken');
+        localStorage.removeItem('selectedProjectId');
       }
     },
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
     },
+  });
+}
+
+export function useCurrentUser(enabled: boolean = true) {
+  return useQuery<CurrentUserResponse>({
+    queryKey: queryKeys.auth.me,
+    queryFn: () => authApi.me(),
+    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  });
+}
+
+// ============================================================================
+// Project Hooks
+// ============================================================================
+
+export function useProjects() {
+  return useQuery<ApiListResponse<Project>>({
+    queryKey: queryKeys.projects.lists(),
+    queryFn: () => projectApi.list(),
   });
 }

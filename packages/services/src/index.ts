@@ -183,6 +183,23 @@ export interface LoginResponse {
   access_token: string;
 }
 
+export interface CurrentUserResponse {
+  event_id: number;
+  name: string;
+  project_id: number;
+  user_id: number;
+  username: string;
+  user_type: string;
+}
+
+export interface Project {
+  ID: number;
+  ProjectName: string;
+  Description?: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+}
+
 // ============================================================================
 // List Query Parameters
 // ============================================================================
@@ -247,8 +264,13 @@ export const apiClient: KyInstance = ky.create({
 // API Service Functions
 // ============================================================================
 
-// Hardcoded projectId as per requirement
-const PROJECT_ID = '1';
+// Get project ID from localStorage (selected by user)
+const getProjectId = (): string => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('selectedProjectId') || '1';
+  }
+  return '1'; // Default fallback
+};
 
 // Guest API
 export const guestApi = {
@@ -256,13 +278,14 @@ export const guestApi = {
     eventId?: number,
     params?: ListQueryParams
   ): Promise<ApiListResponse<Guest>> => {
+    const projectId = getProjectId();
     const searchParams = new URLSearchParams();
     // if (eventId)
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
 
     return apiClient
-      .get(`${PROJECT_ID}/events/${eventId}/guests/list?${searchParams.toString()}`)
+      .get(`${projectId}/events/${eventId}/guests/list?${searchParams.toString()}`)
       .json<ApiListResponse<Guest>>();
   },
 
@@ -270,8 +293,9 @@ export const guestApi = {
     eventId: number,
     data: CreateGuestRequest
   ): Promise<ApiResponse<Guest>> => {
+    const projectId = getProjectId();
     return apiClient
-      .post(`${PROJECT_ID}/events/${eventId}/guests`, { json: data })
+      .post(`${projectId}/events/${eventId}/guests`, { json: data })
       .json<ApiResponse<Guest>>();
   },
 
@@ -280,20 +304,23 @@ export const guestApi = {
     guestId: number,
     data: UpdateGuestRequest
   ): Promise<ApiResponse<void>> => {
+    const projectId = getProjectId();
     return apiClient
-      .put(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`, { json: data })
+      .put(`${projectId}/events/${eventId}/guests/${guestId}`, { json: data })
       .json<ApiResponse<void>>();
   },
 
   delete: async (eventId: number, guestId: number): Promise<ApiResponse<void>> => {
+    const projectId = getProjectId();
     return apiClient
-      .delete(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`)
+      .delete(`${projectId}/events/${eventId}/guests/${guestId}`)
       .json<ApiResponse<void>>();
   },
 
   checkin: async (guestId: number): Promise<ApiResponse<void>> => {
+    const projectId = getProjectId();
     return apiClient
-      .post(`${PROJECT_ID}/guests/checkin/${guestId}`)
+      .post(`${projectId}/guests/checkin/${guestId}`)
       .json<ApiResponse<void>>();
   },
 };
@@ -301,18 +328,20 @@ export const guestApi = {
 // Event API
 export const eventApi = {
   list: async (params?: ListQueryParams): Promise<ApiListResponse<Event>> => {
+    const projectId = getProjectId();
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
 
     return apiClient
-      .get(`${PROJECT_ID}/events/list?${searchParams.toString()}`)
+      .get(`${projectId}/events/list?${searchParams.toString()}`)
       .json<ApiListResponse<Event>>();
   },
 
   create: async (data: CreateEventRequest): Promise<ApiResponse<Event>> => {
+    const projectId = getProjectId();
     return apiClient
-      .post(`${PROJECT_ID}/events`, { json: data })
+      .post(`${projectId}/events`, { json: data })
       .json<ApiResponse<Event>>();
   },
 
@@ -320,13 +349,15 @@ export const eventApi = {
     eventId: number,
     data: UpdateEventRequest
   ): Promise<ApiResponse<void>> => {
+    const projectId = getProjectId();
     return apiClient
-      .put(`${PROJECT_ID}/events/${eventId}`, { json: data })
+      .put(`${projectId}/events/${eventId}`, { json: data })
       .json<ApiResponse<void>>();
   },
 
   delete: async (eventId: number): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`${PROJECT_ID}/events/${eventId}`).json<ApiResponse<void>>();
+    const projectId = getProjectId();
+    return apiClient.delete(`${projectId}/events/${eventId}`).json<ApiResponse<void>>();
   },
 };
 
@@ -363,6 +394,17 @@ export const authApi = {
         json: { username, password },
       })
       .json<LoginResponse>();
+  },
+
+  me: async (): Promise<CurrentUserResponse> => {
+    return apiClient.get('auth/me').json<CurrentUserResponse>();
+  },
+};
+
+// Project API
+export const projectApi = {
+  list: async (): Promise<ApiListResponse<Project>> => {
+    return apiClient.get('projects/list').json<ApiListResponse<Project>>();
   },
 };
 

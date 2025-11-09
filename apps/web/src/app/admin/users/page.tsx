@@ -1,119 +1,58 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-
-interface User {
-  id: string
-  name: string
-  email?: string
-  phone?: string
-  address?: string
-  participantsCount: number
-}
-
-// Mock data for users
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 234 567 8900',
-    address: '123 Main St, New York, NY',
-    participantsCount: 2,
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1 234 567 8901',
-    address: '456 Oak Ave, Los Angeles, CA',
-    participantsCount: 1,
-  },
-  {
-    id: '3',
-    name: 'Bob Johnson',
-    email: 'bob.johnson@example.com',
-    phone: '+1 234 567 8902',
-    address: '789 Pine St, Chicago, IL',
-    participantsCount: 1,
-  },
-  {
-    id: '4',
-    name: 'Alice Wilson',
-    email: 'alice.wilson@example.com',
-    phone: '+1 234 567 8903',
-    address: '321 Elm St, Houston, TX',
-    participantsCount: 0,
-  },
-  {
-    id: '5',
-    name: 'Charlie Brown',
-    email: 'charlie.brown@example.com',
-    phone: '+1 234 567 8904',
-    address: '654 Maple Ave, Miami, FL',
-    participantsCount: 1,
-  },
-]
+import { useState } from 'react';
+import Link from 'next/link';
+import { useUsers, useCreateUser, type User } from '@event-organizer/services';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>(MOCK_USERS)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const { data, isLoading, error } = useUsers({ sort: 'created_at', dir: 'desc' });
+  const createUser = useCreateUser();
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-  })
-
-  const handleCreate = () => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: formData.name,
-      email: formData.email || undefined,
-      phone: formData.phone || undefined,
-      address: formData.address || undefined,
-      participantsCount: 0,
-    }
-    setUsers([...users, newUser])
-    setShowCreateForm(false)
-    setFormData({ name: '', email: '', phone: '', address: '' })
-  }
-
-  const handleEdit = (user: User) => {
-    setEditingUser(user)
-    setFormData({
-      name: user.name,
-      email: user.email || '',
-      phone: user.phone || '',
-      address: user.address || '',
-    })
-  }
-
-  const handleUpdate = () => {
-    if (!editingUser) return
-    const updatedUsers = users.map(user =>
-      user.id === editingUser.id
-        ? { ...user, ...formData, email: formData.email || undefined, phone: formData.phone || undefined, address: formData.address || undefined }
-        : user
-    )
-    setUsers(updatedUsers)
-    setEditingUser(null)
-    setFormData({ name: '', email: '', phone: '', address: '' })
-  }
-
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this user? This will also remove them from all event participants.')) {
-      setUsers(users.filter(user => user.id !== id))
-    }
-  }
+    Name: '',
+    Email: '',
+    Username: '',
+    Password: '',
+    UserType: 'PROJECT_USER' as 'SYSTEM_ADMIN' | 'PROJECT_USER',
+    EventId: ''
+  });
 
   const resetForm = () => {
-    setShowCreateForm(false)
-    setEditingUser(null)
-    setFormData({ name: '', email: '', phone: '', address: '' })
-  }
+    setShowCreateForm(false);
+    setFormData({
+      Name: '',
+      Email: '',
+      Username: '',
+      Password: '',
+      UserType: 'PROJECT_USER',
+      EventId: ''
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!formData.Name.trim() || !formData.Email.trim() || !formData.Username.trim() || !formData.Password.trim()) {
+      alert('Name, Email, Username, and Password are required');
+      return;
+    }
+
+    try {
+      await createUser.mutateAsync({
+        Name: formData.Name,
+        Email: formData.Email,
+        Username: formData.Username,
+        Password: formData.Password,
+        UserType: formData.UserType,
+        ProjectID: '1', // Hardcoded
+        EventId: formData.EventId || undefined
+      });
+
+      resetForm();
+    } catch (err) {
+      console.error('Create error:', err);
+      alert('Failed to create user. Please check console for details.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,76 +80,117 @@ export default function UsersPage() {
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
-              <p className="mt-2 text-gray-600">Create, edit, and delete user profiles</p>
+              <p className="mt-2 text-gray-600">Create and view user profiles (staff/admins)</p>
             </div>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isLoading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create User
             </button>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              Failed to load users. Check API configuration and auth token.
+              <br />
+              <small className="text-xs">Error: {error.message}</small>
+            </div>
+          )}
+
           {/* Form Modal */}
-          {(showCreateForm || editingUser) && (
+          {showCreateForm && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
                 <div className="mt-3">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {editingUser ? 'Edit User' : 'Create New User'}
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Create New User</h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Name *</label>
                       <input
                         type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        value={formData.Name}
+                        onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter full name"
+                        placeholder="Full name"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <label className="block text-sm font-medium text-gray-700">Email *</label>
                       <input
                         type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        value={formData.Email}
+                        onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter email address"
+                        placeholder="user@example.com"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Phone</label>
+                      <label className="block text-sm font-medium text-gray-700">Username *</label>
                       <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        type="text"
+                        value={formData.Username}
+                        onChange={(e) => setFormData({ ...formData, Username: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter phone number"
+                        placeholder="username"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Address</label>
-                      <textarea
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        rows={3}
+                      <label className="block text-sm font-medium text-gray-700">Password *</label>
+                      <input
+                        type="password"
+                        value={formData.Password}
+                        onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter address"
+                        placeholder="Password"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">User Type *</label>
+                      <select
+                        value={formData.UserType}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            UserType: e.target.value as 'SYSTEM_ADMIN' | 'PROJECT_USER'
+                          })
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="PROJECT_USER">Project User</option>
+                        <option value="SYSTEM_ADMIN">System Admin</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Event ID (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.EventId}
+                        onChange={(e) => setFormData({ ...formData, EventId: e.target.value })}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="1"
                       />
                     </div>
                     <div className="flex space-x-3 pt-4">
                       <button
-                        onClick={editingUser ? handleUpdate : handleCreate}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        onClick={handleCreate}
+                        disabled={createUser.isPending}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingUser ? 'Update User' : 'Create User'}
+                        {createUser.isPending ? 'Creating...' : 'Create User'}
                       </button>
                       <button
                         onClick={resetForm}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                        disabled={createUser.isPending}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -223,72 +203,91 @@ export default function UsersPage() {
 
           {/* Users Table */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Events
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      {user.address && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">{user.address}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.email || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.phone || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {user.participantsCount} event{user.participantsCount !== 1 ? 's' : ''}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2 text-gray-500">Loading users...</p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Username
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Project ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {users.length === 0 && (
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {data?.Data?.map((user) => (
+                    <tr key={user.ID}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        #{user.ID}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {user.Name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.Username}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.Email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.UserType === 'SYSTEM_ADMIN'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}
+                        >
+                          {user.UserType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.ProjectID}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(user.CreatedAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {!isLoading && (!data?.Data || data.Data.length === 0) && (
               <div className="text-center py-8 text-gray-500">
                 No users found. Create your first user above.
               </div>
             )}
           </div>
+
+          {/* Pagination Info */}
+          {data?.Pagination && data.Pagination.TotalData > 0 && (
+            <div className="mt-4 text-sm text-gray-500 text-center">
+              Showing {data.Data.length} of {data.Pagination.TotalData} users (Page{' '}
+              {data.Pagination.Page} of {data.Pagination.TotalPage})
+            </div>
+          )}
         </div>
       </main>
     </div>
-  )
+  );
 }

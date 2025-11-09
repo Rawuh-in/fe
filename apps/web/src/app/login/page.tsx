@@ -34,9 +34,13 @@ export default function LoginPage() {
       await login.mutateAsync({ username, password });
       // On success, redirect to dashboard
       router.push('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err?.message || 'Login failed. Please check your credentials and try again.');
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Login failed. Please check your credentials and try again.';
+      setError(errorMessage);
     }
   };
 
@@ -56,7 +60,10 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Username
               </label>
               <input
@@ -73,7 +80,10 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <input

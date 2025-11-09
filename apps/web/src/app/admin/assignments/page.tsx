@@ -2,14 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useEvents, useGuests, parseGuestOptions, type Guest } from '@event-organizer/services';
+import { useEvents, useGuests, parseGuestOptions } from '@event-organizer/services';
 
 export default function AssignmentsPage() {
   const [selectedEventId, setSelectedEventId] = useState('1');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'assigned' | 'unassigned'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'assigned' | 'unassigned'>(
+    'all'
+  );
 
   const { data: eventsData } = useEvents();
-  const { data: guestsData, isLoading } = useGuests(selectedEventId, { sort: 'name', dir: 'asc' });
+  const { data: guestsData, isLoading } = useGuests(selectedEventId, {
+    sort: 'name',
+    dir: 'asc',
+  });
 
   // Extract assignment data from Guest Options
   const assignmentsWithGuests =
@@ -21,7 +26,7 @@ export default function AssignmentsPage() {
         room: options.Room as string | undefined,
         checkInDate: options.CheckInDate as string | undefined,
         checkOutDate: options.CheckOutDate as string | undefined,
-        checkedInAt: options.CheckedInAt as string | undefined
+        checkedInAt: options.CheckedInAt as string | undefined,
       };
     }) || [];
 
@@ -57,7 +62,7 @@ export default function AssignmentsPage() {
   const stats = {
     total: assignmentsWithGuests.length,
     assigned: assignmentsWithGuests.filter((a) => a.hotel || a.room).length,
-    checkedIn: assignmentsWithGuests.filter((a) => a.checkedInAt).length
+    checkedIn: assignmentsWithGuests.filter((a) => a.checkedInAt).length,
   };
 
   return (

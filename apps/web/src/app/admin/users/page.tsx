@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useUsers, useCreateUser, type User } from '@event-organizer/services';
+import { useUsers, useCreateUser } from '@event-organizer/services';
 
 export default function UsersPage() {
   const { data, isLoading, error } = useUsers({ sort: 'created_at', dir: 'desc' });
@@ -15,7 +15,7 @@ export default function UsersPage() {
     Username: '',
     Password: '',
     UserType: 'PROJECT_USER' as 'SYSTEM_ADMIN' | 'PROJECT_USER',
-    EventId: ''
+    EventId: '',
   });
 
   const resetForm = () => {
@@ -26,12 +26,17 @@ export default function UsersPage() {
       Username: '',
       Password: '',
       UserType: 'PROJECT_USER',
-      EventId: ''
+      EventId: '',
     });
   };
 
   const handleCreate = async () => {
-    if (!formData.Name.trim() || !formData.Email.trim() || !formData.Username.trim() || !formData.Password.trim()) {
+    if (
+      !formData.Name.trim() ||
+      !formData.Email.trim() ||
+      !formData.Username.trim() ||
+      !formData.Password.trim()
+    ) {
       alert('Name, Email, Username, and Password are required');
       return;
     }
@@ -44,7 +49,7 @@ export default function UsersPage() {
         Password: formData.Password,
         UserType: formData.UserType,
         ProjectID: '1', // Hardcoded
-        EventId: formData.EventId || undefined
+        EventId: formData.EventId || undefined,
       });
 
       resetForm();
@@ -80,7 +85,9 @@ export default function UsersPage() {
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
-              <p className="mt-2 text-gray-600">Create and view user profiles (staff/admins)</p>
+              <p className="mt-2 text-gray-600">
+                Create and view user profiles (staff/admins)
+              </p>
             </div>
             <button
               onClick={() => setShowCreateForm(true)}
@@ -105,60 +112,80 @@ export default function UsersPage() {
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
               <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
                 <div className="mt-3">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Create New User</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Create New User
+                  </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Name *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Name *
+                      </label>
                       <input
                         type="text"
                         value={formData.Name}
-                        onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Name: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Full name"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Email *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Email *
+                      </label>
                       <input
                         type="email"
                         value={formData.Email}
-                        onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Email: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="user@example.com"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Username *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Username *
+                      </label>
                       <input
                         type="text"
                         value={formData.Username}
-                        onChange={(e) => setFormData({ ...formData, Username: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Username: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="username"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Password *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Password *
+                      </label>
                       <input
                         type="password"
                         value={formData.Password}
-                        onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Password: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Password"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">User Type *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        User Type *
+                      </label>
                       <select
                         value={formData.UserType}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            UserType: e.target.value as 'SYSTEM_ADMIN' | 'PROJECT_USER'
+                            UserType: e.target.value as 'SYSTEM_ADMIN' | 'PROJECT_USER',
                           })
                         }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -174,7 +201,9 @@ export default function UsersPage() {
                       <input
                         type="text"
                         value={formData.EventId}
-                        onChange={(e) => setFormData({ ...formData, EventId: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, EventId: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="1"
                       />

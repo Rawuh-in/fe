@@ -10,7 +10,7 @@ import {
   parseEventOptions,
   stringifyEventOptions,
   type Event,
-  type EventOptions
+  type EventOptions,
 } from '@event-organizer/services';
 
 export default function EventsPage() {
@@ -25,7 +25,7 @@ export default function EventsPage() {
     EventName: '',
     Description: '',
     Hotels: '',
-    Rooms: ''
+    Rooms: '',
   });
 
   const resetForm = () => {
@@ -44,17 +44,21 @@ export default function EventsPage() {
       // Build Options JSON
       const options: EventOptions = {};
       if (formData.Hotels.trim()) {
-        options.Hotels = formData.Hotels.split(',').map(h => h.trim()).filter(Boolean);
+        options.Hotels = formData.Hotels.split(',')
+          .map((h) => h.trim())
+          .filter(Boolean);
       }
       if (formData.Rooms.trim()) {
-        options.Rooms = formData.Rooms.split(',').map(r => r.trim()).filter(Boolean);
+        options.Rooms = formData.Rooms.split(',')
+          .map((r) => r.trim())
+          .filter(Boolean);
       }
 
       await createEvent.mutateAsync({
         EventName: formData.EventName,
         Description: formData.Description || '',
         Options: stringifyEventOptions(options),
-        UserID: '1' // Hardcoded for now
+        UserID: '1', // Hardcoded for now
       });
 
       resetForm();
@@ -71,7 +75,7 @@ export default function EventsPage() {
       EventName: event.EventName,
       Description: event.Description || '',
       Hotels: options.Hotels?.join(', ') || '',
-      Rooms: options.Rooms?.join(', ') || ''
+      Rooms: options.Rooms?.join(', ') || '',
     });
   };
 
@@ -86,10 +90,14 @@ export default function EventsPage() {
       // Build Options JSON
       const options: EventOptions = {};
       if (formData.Hotels.trim()) {
-        options.Hotels = formData.Hotels.split(',').map(h => h.trim()).filter(Boolean);
+        options.Hotels = formData.Hotels.split(',')
+          .map((h) => h.trim())
+          .filter(Boolean);
       }
       if (formData.Rooms.trim()) {
-        options.Rooms = formData.Rooms.split(',').map(r => r.trim()).filter(Boolean);
+        options.Rooms = formData.Rooms.split(',')
+          .map((r) => r.trim())
+          .filter(Boolean);
       }
 
       await updateEvent.mutateAsync({
@@ -98,8 +106,8 @@ export default function EventsPage() {
           EventName: formData.EventName,
           Description: formData.Description || '',
           Options: stringifyEventOptions(options),
-          UserID: '1' // Hardcoded for now
-        }
+          UserID: '1', // Hardcoded for now
+        },
       });
 
       resetForm();
@@ -121,10 +129,10 @@ export default function EventsPage() {
   };
 
   // Calculate statistics for each event (placeholder - would need separate API calls)
-  const getEventStats = (eventId: number) => {
-    // TODO: Fetch guest count for each event
-    return { guestCount: 0, hotelCount: 0, roomCount: 0 };
-  };
+  // const getEventStats = (eventId: number) => {
+  //   // TODO: Fetch guest count for each event
+  //   return { guestCount: 0, hotelCount: 0, roomCount: 0 };
+  // };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,17 +196,23 @@ export default function EventsPage() {
                       <input
                         type="text"
                         value={formData.EventName}
-                        onChange={(e) => setFormData({ ...formData, EventName: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, EventName: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter event name"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Description</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Description
+                      </label>
                       <textarea
                         value={formData.Description}
-                        onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Description: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter event description"
                         rows={3}
@@ -211,7 +225,9 @@ export default function EventsPage() {
                       <input
                         type="text"
                         value={formData.Hotels}
-                        onChange={(e) => setFormData({ ...formData, Hotels: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Hotels: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="e.g., Hotel A, Hotel B, Hotel C"
                       />
@@ -223,7 +239,9 @@ export default function EventsPage() {
                       <input
                         type="text"
                         value={formData.Rooms}
-                        onChange={(e) => setFormData({ ...formData, Rooms: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Rooms: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="e.g., Room 101, Room 102, Suite A"
                       />
@@ -232,8 +250,9 @@ export default function EventsPage() {
                       <button
                         onClick={editingEvent ? handleUpdate : handleCreate}
                         disabled={
-                          (editingEvent ? updateEvent.isPending : createEvent.isPending) ||
-                          !formData.EventName.trim()
+                          (editingEvent
+                            ? updateEvent.isPending
+                            : createEvent.isPending) || !formData.EventName.trim()
                         }
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >

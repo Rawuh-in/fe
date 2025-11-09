@@ -1,179 +1,127 @@
-'use client'
+'use client';
 
-import { useState, useRef } from 'react'
-import Link from 'next/link'
-
-type AssignmentStatus = 'not_coming' | 'checked_in' | 'checked_out'
-type AssignmentType = 'hotel' | 'meeting'
-
-interface ParticipantAssignment {
-  id: number
-  type: AssignmentType
-  value: string
-  status: AssignmentStatus
-  checkinTime: string | null
-}
-
-interface Participant {
-  id: number
-  name: string
-  event: string
-  assignments: ParticipantAssignment[]
-}
-
-type AssignmentListItem = ParticipantAssignment & {
-  participantName: string
-  eventName: string
-}
-
-const formatTimestamp = () => new Date().toISOString().slice(0, 19).replace('T', ' ')
-
-// Mock data for participants and assignments
-const MOCK_PARTICIPANTS: Participant[] = [
-  {
-    id: 1,
-    name: 'John Doe',
-    event: 'Tech Conference 2025',
-    assignments: [
-      { id: 1, type: 'hotel', value: 'Hotel A - Room 101', status: 'not_coming', checkinTime: null },
-      { id: 2, type: 'meeting', value: 'Opening Ceremony', status: 'not_coming', checkinTime: null },
-      { id: 3, type: 'meeting', value: 'Workshop A', status: 'checked_in', checkinTime: '2025-01-15 09:30:00' },
-    ]
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    event: 'Tech Conference 2025',
-    assignments: [
-      { id: 4, type: 'hotel', value: 'Hotel B - Room 205', status: 'checked_in', checkinTime: '2025-01-15 08:15:00' },
-      { id: 5, type: 'meeting', value: 'Opening Ceremony', status: 'not_coming', checkinTime: null },
-    ]
-  },
-  {
-    id: 3,
-    name: 'Bob Johnson',
-    event: 'Product Launch Event',
-    assignments: [
-      { id: 6, type: 'meeting', value: 'Product Demo', status: 'not_coming', checkinTime: null },
-      { id: 7, type: 'meeting', value: 'VIP Reception', status: 'checked_out', checkinTime: '2025-01-15 17:45:00' },
-    ]
-  },
-]
-
-const MOCK_ASSIGNMENTS: AssignmentListItem[] = MOCK_PARTICIPANTS.flatMap((participant) =>
-  participant.assignments.map<AssignmentListItem>((assignment) => ({
-    ...assignment,
-    participantName: participant.name,
-    eventName: participant.event,
-  }))
-)
+import { useState, useRef } from 'react';
+import Link from 'next/link';
+import {
+  useEvents,
+  useGuests,
+  useUpdateGuest,
+  parseGuestOptions,
+  stringifyGuestOptions,
+  type Guest,
+  type GuestOptions
+} from '@event-organizer/services';
 
 export default function CheckInPage() {
-  const [selectedEvent, setSelectedEvent] = useState('Tech Conference 2025')
-  const [manualCode, setManualCode] = useState('')
-  const [scanResult, setScanResult] = useState<string | null>(null)
-  const [lastScanned, setLastScanned] = useState<AssignmentListItem | null>(null)
-  const [assignments, setAssignments] = useState<AssignmentListItem[]>(MOCK_ASSIGNMENTS)
+  const [selectedEventId, setSelectedEventId] = useState('1');
+  const [manualGuestId, setManualGuestId] = useState('');
+  const [scanResult, setScanResult] = useState<string | null>(null);
+  const [lastScanned, setLastScanned] = useState<Guest | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { data: eventsData } = useEvents();
+  const { data: guestsData, isLoading } = useGuests(selectedEventId, { sort: 'name', dir: 'asc' });
+  const updateGuest = useUpdateGuest();
 
-  const handleManualScan = () => {
-    // Simulate scanning assignment IDs
-    const assignmentId = Number.parseInt(manualCode, 10)
-    if (Number.isNaN(assignmentId)) {
-      setScanResult(`❌ Assignment not found with ID: ${manualCode}`)
-      setManualCode('')
-      return
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCheckIn = async (guest: Guest) => {
+    try {
+      const options: GuestOptions = parseGuestOptions(guest.Options);
+
+      // Add check-in timestamp
+      options.CheckedInAt = new Date().toISOString();
+
+      await updateGuest.mutateAsync({
+        eventId: selectedEventId,
+        guestId: guest.ID.toString(),
+        data: {
+          Name: guest.Name,
+          Email: guest.Email,
+          Phone: guest.Phone,
+          Address: guest.Address,
+          Options: stringifyGuestOptions(options)
+        }
+      });
+
+      setLastScanned(guest);
+      setScanResult(`✅ Successfully checked in ${guest.Name}`);
+    } catch (err) {
+      console.error('Check-in error:', err);
+      setScanResult(`❌ Failed to check in ${guest.Name}`);
+    }
+  };
+
+  const handleManualCheckIn = () => {
+    const guestId = Number.parseInt(manualGuestId, 10);
+    if (Number.isNaN(guestId)) {
+      setScanResult(`❌ Invalid Guest ID: ${manualGuestId}`);
+      setManualGuestId('');
+      return;
     }
 
-    const assignment = assignments.find(candidate => candidate.id === assignmentId)
+    const guest = guestsData?.Data?.find((g) => g.ID === guestId);
 
-    if (assignment) {
-      // Simulate check-in
-      const checkinTime = formatTimestamp()
-
-      setAssignments(prevAssignments =>
-        prevAssignments.map(item =>
-          item.id === assignmentId
-            ? {
-                ...item,
-                status: 'checked_in',
-                checkinTime,
-              }
-            : item
-        )
-      )
-
-      setLastScanned({
-        ...assignment,
-        status: 'checked_in',
-        checkinTime,
-      })
-
-      setScanResult(`✅ Successfully checked in ${assignment.participantName} for ${assignment.value}`)
+    if (guest) {
+      handleCheckIn(guest);
     } else {
-      setScanResult(`❌ Assignment not found with ID: ${manualCode}`)
+      setScanResult(`❌ Guest not found with ID: ${manualGuestId}`);
     }
 
-    setManualCode('')
-  }
+    setManualGuestId('');
+  };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleQRUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      // Simulate QR code processing
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = () => {
-        // Mock QR code data processing
-        const mockQrData = `{"assignmentId": 1, "token": "mock-token-${Date.now()}"}`
-
         try {
-          const parsed = JSON.parse(mockQrData)
-          const assignment = assignments.find(item => item.id === parsed.assignmentId)
+          // In production, this would decode actual QR image
+          // For now, simulate QR data: {"guestId": 123}
+          const mockQrData = `{"guestId": ${guestsData?.Data?.[0]?.ID || 1}}`;
+          const parsed = JSON.parse(mockQrData);
 
-          if (assignment) {
-            const checkinTime = formatTimestamp()
+          const guest = guestsData?.Data?.find((g) => g.ID === parsed.guestId);
 
-            setAssignments(prevAssignments =>
-              prevAssignments.map(item =>
-                item.id === parsed.assignmentId
-                  ? {
-                      ...item,
-                      status: 'checked_in',
-                      checkinTime,
-                    }
-                  : item
-              )
-            )
-
-            setLastScanned({
-              ...assignment,
-              status: 'checked_in',
-              checkinTime,
-            })
-
-            setScanResult(`✅ QR Code scanned: ${assignment.participantName} checked in for ${assignment.value}`)
+          if (guest) {
+            handleCheckIn(guest);
+            setScanResult(`✅ QR Code scanned: ${guest.Name} checked in`);
           } else {
-            setScanResult(`❌ Invalid QR code - assignment not found`)
+            setScanResult(`❌ Invalid QR code - guest not found`);
           }
         } catch {
-          setScanResult(`❌ Invalid QR code format`)
+          setScanResult(`❌ Invalid QR code format`);
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
-  const getStatusBadgeClass = (status: AssignmentStatus) => {
+  const getCheckInStatus = (guest: Guest) => {
+    const options = parseGuestOptions(guest.Options);
+    return options.CheckedInAt ? 'checked_in' : 'not_checked_in';
+  };
+
+  const getCheckInTime = (guest: Guest) => {
+    const options = parseGuestOptions(guest.Options);
+    return options.CheckedInAt
+      ? new Date(options.CheckedInAt).toLocaleString()
+      : null;
+  };
+
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'checked_in': return 'bg-green-100 text-green-800'
-      case 'checked_out': return 'bg-blue-100 text-blue-800'
-      case 'not_coming': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'checked_in':
+        return 'bg-green-100 text-green-800';
+      case 'not_checked_in':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
-  }
+  };
 
-  const filteredAssignments = assignments.filter(a => a.eventName === selectedEvent)
+  const checkedInCount = guestsData?.Data?.filter(g => getCheckInStatus(g) === 'checked_in').length || 0;
+  const totalCount = guestsData?.Data?.length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -199,144 +147,198 @@ export default function CheckInPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Check-in Station</h1>
-            <p className="mt-2 text-gray-600">Scan QR codes or enter assignment IDs to check in participants</p>
+            <h1 className="text-3xl font-bold text-gray-900">Guest Check-in Station</h1>
+            <p className="mt-2 text-gray-600">Scan QR codes or enter Guest ID manually</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Scan Section */}
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Scan Options</h2>
+          {/* Event Selector and Stats */}
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <label className="text-sm font-medium text-gray-700">Event:</label>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                {eventsData?.Data?.map((event) => (
+                  <option key={event.ID} value={event.ID}>
+                    {event.EventName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold text-green-600">{checkedInCount}</span> of{' '}
+              <span className="font-semibold">{totalCount}</span> guests checked in
+            </div>
+          </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Event</label>
-                  <select
-                    value={selectedEvent}
-                    onChange={(e) => setSelectedEvent(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="Tech Conference 2025">Tech Conference 2025</option>
-                    <option value="Product Launch Event">Product Launch Event</option>
-                    <option value="Annual Meeting">Annual Meeting</option>
-                  </select>
+          {/* Check-in Methods */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Manual Entry */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Manual Entry</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter Guest ID
+                  </label>
+                  <input
+                    type="text"
+                    value={manualGuestId}
+                    onChange={(e) => setManualGuestId(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., 123"
+                  />
                 </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Manual Entry</h3>
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        placeholder="Enter assignment ID (1-7)"
-                        value={manualCode}
-                        onChange={(e) => setManualCode(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <button
-                        onClick={handleManualScan}
-                        disabled={!manualCode}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-                      >
-                        Check In
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">QR Code Scanner</h3>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <span>📷 Upload QR Code Image</span>
-                    </button>
-                    <p className="text-xs text-gray-500 mt-1">Upload a QR code image to simulate scanning</p>
-                  </div>
-                </div>
-
-                {scanResult && (
-                  <div className={`mt-4 p-3 rounded-md ${scanResult.startsWith('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                    {scanResult}
-                  </div>
-                )}
-
-                {lastScanned && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-md">
-                    <h4 className="font-medium text-blue-900">Last Scanned</h4>
-                    <p className="text-blue-800">{lastScanned.participantName}</p>
-                    <p className="text-blue-700">{lastScanned.value}</p>
-                    <p className="text-blue-600 text-sm">{lastScanned.checkinTime}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Status Summary */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Scan Summary</h2>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {filteredAssignments.filter(a => a.status === 'checked_in').length}
-                    </div>
-                    <div className="text-sm text-gray-500">Checked In</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {filteredAssignments.filter(a => a.status === 'checked_out').length}
-                    </div>
-                    <div className="text-sm text-gray-500">Checked Out</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">
-                      {filteredAssignments.filter(a => a.status === 'not_coming').length}
-                    </div>
-                    <div className="text-sm text-gray-500">Not Coming</div>
-                  </div>
-                </div>
+                <button
+                  onClick={handleManualCheckIn}
+                  disabled={updateGuest.isPending}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {updateGuest.isPending ? 'Checking in...' : 'Check In'}
+                </button>
               </div>
             </div>
 
-            {/* Assignments List */}
+            {/* QR Code Scanner */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Current Assignments</h2>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {filteredAssignments.map((assignment) => (
-                  <div key={assignment.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900">{assignment.participantName}</p>
-                          <p className="text-sm text-gray-600 capitalize">{assignment.type}: {assignment.value}</p>
-                        </div>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(assignment.status)}`}
-                        >
-                          {assignment.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      {assignment.checkinTime && (
-                        <p className="text-xs text-gray-500 mt-1">{assignment.checkinTime}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code Scanner</h3>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Upload a QR code image to check in a guest
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleQRUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={updateGuest.isPending}
+                  className="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  📷 Upload QR Code Image
+                </button>
+                <p className="text-xs text-gray-500">
+                  Supported formats: JPG, PNG (simulated for demo)
+                </p>
               </div>
+            </div>
+          </div>
 
-              {filteredAssignments.length === 0 && (
-                <p className="text-gray-500 text-center py-8">No assignments found for this event.</p>
+          {/* Scan Result */}
+          {scanResult && (
+            <div
+              className={`mb-6 p-4 rounded-md ${
+                scanResult.includes('✅')
+                  ? 'bg-green-50 border border-green-200 text-green-800'
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}
+            >
+              <p className="font-medium">{scanResult}</p>
+              {lastScanned && scanResult.includes('✅') && (
+                <div className="mt-2 text-sm">
+                  <p>Guest: {lastScanned.Name}</p>
+                  <p>Email: {lastScanned.Email || 'N/A'}</p>
+                  <p>Phone: {lastScanned.Phone || 'N/A'}</p>
+                </div>
               )}
             </div>
+          )}
+
+          {/* Guest List */}
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Guest List</h3>
+            </div>
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2 text-gray-500">Loading guests...</p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Guest Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Check-in Time
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {guestsData?.Data?.map((guest) => {
+                    const status = getCheckInStatus(guest);
+                    const checkInTime = getCheckInTime(guest);
+                    return (
+                      <tr key={guest.ID}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          #{guest.ID}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {guest.Name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {guest.Email || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                              status
+                            )}`}
+                          >
+                            {status === 'checked_in' ? 'Checked In' : 'Not Checked In'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {checkInTime || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          {status === 'not_checked_in' && (
+                            <button
+                              onClick={() => handleCheckIn(guest)}
+                              disabled={updateGuest.isPending}
+                              className="text-blue-600 hover:text-blue-900 disabled:opacity-50"
+                            >
+                              Check In
+                            </button>
+                          )}
+                          {status === 'checked_in' && (
+                            <span className="text-green-600">✓ Checked In</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            {!isLoading && (!guestsData?.Data || guestsData.Data.length === 0) && (
+              <div className="text-center py-8 text-gray-500">
+                No guests found for this event.
+              </div>
+            )}
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }

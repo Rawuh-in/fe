@@ -2,45 +2,67 @@ import ky, { type KyInstance } from "ky";
 import { z } from "zod";
 
 // ============================================================================
-// Base Response Types (matching actual backend API from Swagger spec)
+// Base Response Types (flexible to accept both naming conventions)
 // ============================================================================
 
+// Flexible pagination schema
 export const paginationSchema = z.object({
-  page: z.number(),
-  limit: z.number(),
-  totalPages: z.number(),
-  totalRows: z.number()
-});
+  page: z.number().optional(),
+  Page: z.number().optional(),
+  limit: z.number().optional(),
+  Limit: z.number().optional(),
+  totalPages: z.number().optional(),
+  TotalPage: z.number().optional(),
+  totalRows: z.number().optional(),
+  TotalData: z.number().optional()
+}).passthrough();
 
 export type Pagination = z.infer<typeof paginationSchema>;
 
+// Flexible response interface
 export interface ApiResponse<T> {
-  error: boolean;
-  code: number;
-  message: string;
-  data: T;
+  error?: boolean;
+  Error?: boolean;
+  code?: number;
+  Code?: number;
+  message?: string;
+  Message?: string;
+  data?: T;
+  Data?: T;
 }
 
 export interface ApiListResponse<T> extends ApiResponse<T[]> {
-  pagination: Pagination;
+  pagination?: Pagination;
+  Pagination?: Pagination;
 }
 
 // ============================================================================
 // Guest Types (Backend: Guest, Frontend: Participant/Attendee)
 // ============================================================================
 
+// Flexible schema that accepts both camelCase (Swagger spec) and PascalCase (current backend)
 export const guestSchema = z.object({
-  guestID: z.number(),
-  projectID: z.number(),
-  eventID: z.number(),
-  guestName: z.string(),
+  // Accept both field naming conventions
+  guestID: z.number().optional(),
+  ID: z.number().optional(),
+  projectID: z.number().optional(),
+  ProjectID: z.number().optional(),
+  eventID: z.number().optional(),
+  EventId: z.number().optional(),
+  guestName: z.string().optional(),
+  Name: z.string().optional(),
   email: z.string().optional(),
+  Email: z.string().optional(),
   phoneNumber: z.string().optional(),
-  customData: z.string(), // JSON string for hotel/room assignments
-  qrCode: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string()
-});
+  Phone: z.string().optional(),
+  customData: z.string().optional(),
+  Options: z.string().optional(), // Old field name
+  qrCode: z.string().optional(),
+  createdAt: z.string().optional(),
+  CreatedAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  UpdatedAt: z.string().optional()
+}).passthrough(); // Allow additional fields
 
 export type Guest = z.infer<typeof guestSchema>;
 
@@ -72,15 +94,24 @@ export interface UpdateGuestRequest {
 // Event Types
 // ============================================================================
 
+// Flexible schema that accepts both camelCase (Swagger spec) and PascalCase (current backend)
 export const eventSchema = z.object({
-  eventID: z.number(),
-  projectID: z.number(),
-  eventName: z.string(),
+  // Accept both field naming conventions
+  eventID: z.number().optional(),
+  ID: z.number().optional(),
+  projectID: z.number().optional(),
+  ProjectID: z.number().optional(),
+  eventName: z.string().optional(),
+  EventName: z.string().optional(),
   description: z.string().optional(),
-  options: z.string(), // JSON string: {"Hotels":["A","B"],"Rooms":["1","2"]}
-  createdAt: z.string(),
-  updatedAt: z.string()
-});
+  Description: z.string().optional(),
+  options: z.string().optional(),
+  Options: z.string().optional(),
+  createdAt: z.string().optional(),
+  CreatedAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  UpdatedAt: z.string().optional()
+}).passthrough(); // Allow additional fields
 
 export type Event = z.infer<typeof eventSchema>;
 
@@ -106,13 +137,22 @@ export interface UpdateEventRequest {
 // User Types
 // ============================================================================
 
+// Flexible schema that accepts both camelCase (Swagger spec) and PascalCase (current backend)
 export const userSchema = z.object({
-  userID: z.number(),
-  username: z.string(),
-  role: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string()
-});
+  // Accept both field naming conventions
+  userID: z.number().optional(),
+  ID: z.number().optional(),
+  username: z.string().optional(),
+  Username: z.string().optional(),
+  role: z.string().optional(),
+  UserType: z.string().optional(),
+  Name: z.string().optional(),
+  Email: z.string().optional(),
+  createdAt: z.string().optional(),
+  CreatedAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  UpdatedAt: z.string().optional()
+}).passthrough(); // Allow additional fields
 
 export type User = z.infer<typeof userSchema>;
 

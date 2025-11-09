@@ -25,10 +25,12 @@ export default function Dashboard() {
     return null; // Will redirect to login
   }
 
-  // Calculate statistics from real data
+  // Calculate statistics from real data (handle both field naming conventions)
   const stats = {
-    events: eventsData?.pagination?.totalRows || 0,
-    users: usersData?.pagination?.totalRows || 0,
+    events: eventsData?.pagination?.totalRows || eventsData?.Pagination?.TotalData ||
+            eventsData?.pagination?.TotalData || eventsData?.data?.length || 0,
+    users: usersData?.pagination?.totalRows || usersData?.Pagination?.TotalData ||
+           usersData?.pagination?.TotalData || usersData?.data?.length || 0,
     // Note: Guests count would need to aggregate across all events
     // For now, we'll show a placeholder
     guests: '—',
@@ -173,21 +175,21 @@ export default function Dashboard() {
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 <p className="mt-2 text-gray-500">Loading events...</p>
               </div>
-            ) : eventsData?.data && eventsData.data.length > 0 ? (
+            ) : (eventsData?.data || eventsData?.Data) && (eventsData?.data?.length || eventsData?.Data?.length) > 0 ? (
               <ul className="divide-y divide-gray-200">
-                {eventsData.data.map((event) => {
-                  const options = parseEventOptions(event.options);
+                {(eventsData.data || eventsData.Data || []).map((event, index) => {
+                  const options = parseEventOptions(event.options || event.Options);
                   return (
-                    <li key={event.eventID} className="px-6 py-4">
+                    <li key={event.eventID || event.ID || index} className="px-6 py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <div>
                               <h3 className="text-lg font-medium text-gray-900">
-                                {event.eventName}
+                                {event.eventName || event.EventName}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                {event.description || 'No description'}
+                                {event.description || event.Description || 'No description'}
                               </p>
                               <div className="mt-2 flex space-x-4 text-sm text-gray-500">
                                 <span>
@@ -197,7 +199,7 @@ export default function Dashboard() {
                                   {options.Rooms?.length || 0} rooms
                                 </span>
                                 <span>
-                                  Created {new Date(event.createdAt).toLocaleDateString()}
+                                  Created {new Date(event.createdAt || event.CreatedAt).toLocaleDateString()}
                                 </span>
                               </div>
                             </div>

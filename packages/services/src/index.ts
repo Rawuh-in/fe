@@ -257,33 +257,37 @@ export const guestApi = {
     params?: ListQueryParams
   ): Promise<ApiListResponse<Guest>> => {
     const searchParams = new URLSearchParams();
-    if (eventId) searchParams.set('eventID', eventId.toString());
+    // if (eventId)
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
 
     return apiClient
-      .get(`${PROJECT_ID}/guests/list?${searchParams.toString()}`)
+      .get(`${PROJECT_ID}/events/${eventId}/guests/list?${searchParams.toString()}`)
       .json<ApiListResponse<Guest>>();
   },
 
-  create: async (data: CreateGuestRequest): Promise<ApiResponse<Guest>> => {
+  create: async (
+    eventId: number,
+    data: CreateGuestRequest
+  ): Promise<ApiResponse<Guest>> => {
     return apiClient
-      .post(`${PROJECT_ID}/guests/add`, { json: data })
+      .post(`${PROJECT_ID}/events/${eventId}/guests`, { json: data })
       .json<ApiResponse<Guest>>();
   },
 
   update: async (
+    eventId: number,
     guestId: number,
     data: UpdateGuestRequest
   ): Promise<ApiResponse<void>> => {
     return apiClient
-      .put(`${PROJECT_ID}/guests/edit/${guestId}`, { json: data })
+      .put(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`, { json: data })
       .json<ApiResponse<void>>();
   },
 
-  delete: async (guestId: number): Promise<ApiResponse<void>> => {
+  delete: async (eventId: number, guestId: number): Promise<ApiResponse<void>> => {
     return apiClient
-      .delete(`${PROJECT_ID}/guests/delete/${guestId}`)
+      .delete(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`)
       .json<ApiResponse<void>>();
   },
 
@@ -308,7 +312,7 @@ export const eventApi = {
 
   create: async (data: CreateEventRequest): Promise<ApiResponse<Event>> => {
     return apiClient
-      .post(`${PROJECT_ID}/events/add`, { json: data })
+      .post(`${PROJECT_ID}/events`, { json: data })
       .json<ApiResponse<Event>>();
   },
 
@@ -317,14 +321,12 @@ export const eventApi = {
     data: UpdateEventRequest
   ): Promise<ApiResponse<void>> => {
     return apiClient
-      .put(`${PROJECT_ID}/events/edit/${eventId}`, { json: data })
+      .put(`${PROJECT_ID}/events/${eventId}`, { json: data })
       .json<ApiResponse<void>>();
   },
 
   delete: async (eventId: number): Promise<ApiResponse<void>> => {
-    return apiClient
-      .delete(`${PROJECT_ID}/events/delete/${eventId}`)
-      .json<ApiResponse<void>>();
+    return apiClient.delete(`${PROJECT_ID}/events/${eventId}`).json<ApiResponse<void>>();
   },
 };
 
@@ -336,7 +338,7 @@ export const userApi = {
     if (params?.limit) searchParams.set('limit', params.limit.toString());
 
     return apiClient
-      .get(`users?${searchParams.toString()}`)
+      .get(`users/list?${searchParams.toString()}`)
       .json<ApiListResponse<User>>();
   },
 

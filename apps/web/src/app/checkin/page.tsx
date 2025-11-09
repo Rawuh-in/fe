@@ -34,6 +34,7 @@ export default function CheckInPage() {
       options.CheckedInAt = new Date().toISOString();
 
       await updateGuest.mutateAsync({
+        eventId: selectedEventId,
         guestId: guest.ID!,
         data: {
           guestName: guest.Name!,

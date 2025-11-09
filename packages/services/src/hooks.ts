@@ -1,5 +1,10 @@
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import { eventApi, guestApi, userApi, authApi } from "./index";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
+import { eventApi, guestApi, userApi, authApi } from './index';
 import type {
   ApiListResponse,
   ApiResponse,
@@ -13,8 +18,8 @@ import type {
   UpdateEventRequest,
   UpdateGuestRequest,
   UpdateUserRequest,
-  User
-} from "./index";
+  User,
+} from './index';
 
 // ============================================================================
 // Query Keys (for cache management)
@@ -22,21 +27,21 @@ import type {
 
 export const queryKeys = {
   events: {
-    all: ["events"] as const,
-    lists: () => [...queryKeys.events.all, "list"] as const,
-    list: (params?: ListQueryParams) => [...queryKeys.events.lists(), params] as const
+    all: ['events'] as const,
+    lists: () => [...queryKeys.events.all, 'list'] as const,
+    list: (params?: ListQueryParams) => [...queryKeys.events.lists(), params] as const,
   },
   guests: {
-    all: ["guests"] as const,
-    lists: () => [...queryKeys.guests.all, "list"] as const,
+    all: ['guests'] as const,
+    lists: () => [...queryKeys.guests.all, 'list'] as const,
     list: (eventId?: number, params?: ListQueryParams) =>
-      [...queryKeys.guests.lists(), eventId, params] as const
+      [...queryKeys.guests.lists(), eventId, params] as const,
   },
   users: {
-    all: ["users"] as const,
-    lists: () => [...queryKeys.users.all, "list"] as const,
-    list: (params?: ListQueryParams) => [...queryKeys.users.lists(), params] as const
-  }
+    all: ['users'] as const,
+    lists: () => [...queryKeys.users.all, 'list'] as const,
+    list: (params?: ListQueryParams) => [...queryKeys.users.lists(), params] as const,
+  },
 };
 
 // ============================================================================
@@ -46,7 +51,7 @@ export const queryKeys = {
 export function useEvents(params?: ListQueryParams) {
   return useQuery<ApiListResponse<Event>>({
     queryKey: queryKeys.events.list(params),
-    queryFn: () => eventApi.list(params)
+    queryFn: () => eventApi.list(params),
   });
 }
 
@@ -57,7 +62,7 @@ export function useCreateEvent() {
     mutationFn: (data: CreateEventRequest) => eventApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
-    }
+    },
   });
 }
 
@@ -69,7 +74,7 @@ export function useUpdateEvent() {
       eventApi.update(eventId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
-    }
+    },
   });
 }
 
@@ -80,7 +85,7 @@ export function useDeleteEvent() {
     mutationFn: (eventId: number) => eventApi.delete(eventId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
-    }
+    },
   });
 }
 
@@ -91,7 +96,7 @@ export function useDeleteEvent() {
 export function useGuests(eventId?: number, params?: ListQueryParams) {
   return useQuery<ApiListResponse<Guest>>({
     queryKey: queryKeys.guests.list(eventId, params),
-    queryFn: () => guestApi.list(eventId, params)
+    queryFn: () => guestApi.list(eventId, params),
   });
 }
 
@@ -99,10 +104,11 @@ export function useCreateGuest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateGuestRequest) => guestApi.create(data),
+    mutationFn: ({ eventId, data }: { eventId: number; data: CreateGuestRequest }) =>
+      guestApi.create(eventId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
-    }
+    },
   });
 }
 
@@ -110,11 +116,18 @@ export function useUpdateGuest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ guestId, data }: { guestId: number; data: UpdateGuestRequest }) =>
-      guestApi.update(guestId, data),
+    mutationFn: ({
+      eventId,
+      guestId,
+      data,
+    }: {
+      eventId: number;
+      guestId: number;
+      data: UpdateGuestRequest;
+    }) => guestApi.update(eventId, guestId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
-    }
+    },
   });
 }
 
@@ -122,10 +135,11 @@ export function useDeleteGuest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (guestId: number) => guestApi.delete(guestId),
+    mutationFn: ({ eventId, guestId }: { eventId: number; guestId: number }) =>
+      guestApi.delete(eventId, guestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
-    }
+    },
   });
 }
 
@@ -136,7 +150,7 @@ export function useCheckinGuest() {
     mutationFn: (guestId: number) => guestApi.checkin(guestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
-    }
+    },
   });
 }
 
@@ -147,7 +161,7 @@ export function useCheckinGuest() {
 export function useUsers(params?: ListQueryParams) {
   return useQuery<ApiListResponse<User>>({
     queryKey: queryKeys.users.list(params),
-    queryFn: () => userApi.list(params)
+    queryFn: () => userApi.list(params),
   });
 }
 
@@ -158,7 +172,7 @@ export function useCreateUser() {
     mutationFn: (data: CreateUserRequest) => userApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
-    }
+    },
   });
 }
 
@@ -170,7 +184,7 @@ export function useUpdateUser() {
       userApi.update(userId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
-    }
+    },
   });
 }
 
@@ -181,7 +195,7 @@ export function useDeleteUser() {
     mutationFn: (userId: number) => userApi.delete(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
-    }
+    },
   });
 }
 
@@ -218,18 +232,18 @@ export function useLogin() {
         token = data;
       }
 
-      if (token && typeof window !== "undefined") {
+      if (token && typeof window !== 'undefined') {
         // Strip "Bearer " prefix if it exists
         const cleanToken = token.replace(/^Bearer\s+/i, '');
         console.log('Storing token (cleaned):', cleanToken);
-        localStorage.setItem("authToken", cleanToken);
+        localStorage.setItem('authToken', cleanToken);
         // Invalidate all queries to refetch with new auth
         queryClient.invalidateQueries();
       } else {
         console.error('Could not extract token from response:', data);
         throw new Error('Login succeeded but token not found in response');
       }
-    }
+    },
   });
 }
 
@@ -239,13 +253,13 @@ export function useLogout() {
   return useMutation({
     mutationFn: async () => {
       // Clear token
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("authToken");
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
       }
     },
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
-    }
+    },
   });
 }

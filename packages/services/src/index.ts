@@ -190,8 +190,13 @@ export const apiClient: KyInstance = ky.create({
     beforeRequest: [
       (request) => {
         const token = getAuthToken();
+        console.log('API Request:', request.url);
+        console.log('Auth token from storage:', token);
         if (token) {
           request.headers.set("Authorization", `Bearer ${token}`);
+          console.log('Authorization header set:', `Bearer ${token?.substring(0, 20)}...`);
+        } else {
+          console.warn('No auth token found!');
         }
       }
     ]

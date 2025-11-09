@@ -1,106 +1,130 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-
-interface Event {
-  id: string
-  name: string
-  startDate: string
-  endDate: string
-  participants: number
-  assignments: number
-  options: number
-}
-
-// Mock data for events
-const MOCK_EVENTS: Event[] = [
-  {
-    id: '1',
-    name: 'Tech Conference 2025',
-    startDate: '2025-03-15',
-    endDate: '2025-03-17',
-    participants: 45,
-    assignments: 78,
-    options: 12,
-  },
-  {
-    id: '2',
-    name: 'Product Launch Event',
-    startDate: '2025-04-20',
-    endDate: '2025-04-20',
-    participants: 23,
-    assignments: 34,
-    options: 5,
-  },
-  {
-    id: '3',
-    name: 'Annual Meeting',
-    startDate: '2025-05-10',
-    endDate: '2025-05-12',
-    participants: 21,
-    assignments: 44,
-    options: 8,
-  },
-]
+import { useState } from 'react';
+import Link from 'next/link';
+import {
+  useEvents,
+  useCreateEvent,
+  useUpdateEvent,
+  useDeleteEvent,
+  parseEventOptions,
+  stringifyEventOptions,
+  type Event,
+  type EventOptions
+} from '@event-organizer/services';
 
 export default function EventsPage() {
-  const [events, setEvents] = useState<Event[]>(MOCK_EVENTS)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const { data, isLoading, error } = useEvents({ sort: 'created_at', dir: 'desc' });
+  const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
+  const deleteEvent = useDeleteEvent();
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    startDate: '',
-    endDate: '',
-  })
-
-  const handleCreate = () => {
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      name: formData.name,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      participants: 0,
-      assignments: 0,
-      options: 0,
-    }
-    setEvents([...events, newEvent])
-    setShowCreateForm(false)
-    setFormData({ name: '', startDate: '', endDate: '' })
-  }
-
-  const handleEdit = (event: Event) => {
-    setEditingEvent(event)
-    setFormData({
-      name: event.name,
-      startDate: event.startDate,
-      endDate: event.endDate,
-    })
-  }
-
-  const handleUpdate = () => {
-    if (!editingEvent) return
-    const updatedEvents = events.map(event =>
-      event.id === editingEvent.id
-        ? { ...event, ...formData }
-        : event
-    )
-    setEvents(updatedEvents)
-    setEditingEvent(null)
-    setFormData({ name: '', startDate: '', endDate: '' })
-  }
-
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this event?')) {
-      setEvents(events.filter(event => event.id !== id))
-    }
-  }
+    EventName: '',
+    Description: '',
+    Hotels: '',
+    Rooms: ''
+  });
 
   const resetForm = () => {
-    setShowCreateForm(false)
-    setEditingEvent(null)
-    setFormData({ name: '', startDate: '', endDate: '' })
-  }
+    setShowCreateForm(false);
+    setEditingEvent(null);
+    setFormData({ EventName: '', Description: '', Hotels: '', Rooms: '' });
+  };
+
+  const handleCreate = async () => {
+    if (!formData.EventName.trim()) {
+      alert('Event name is required');
+      return;
+    }
+
+    try {
+      // Build Options JSON
+      const options: EventOptions = {};
+      if (formData.Hotels.trim()) {
+        options.Hotels = formData.Hotels.split(',').map(h => h.trim()).filter(Boolean);
+      }
+      if (formData.Rooms.trim()) {
+        options.Rooms = formData.Rooms.split(',').map(r => r.trim()).filter(Boolean);
+      }
+
+      await createEvent.mutateAsync({
+        EventName: formData.EventName,
+        Description: formData.Description || '',
+        Options: stringifyEventOptions(options),
+        UserID: '1' // Hardcoded for now
+      });
+
+      resetForm();
+    } catch (err) {
+      console.error('Create error:', err);
+      alert('Failed to create event. Please check console for details.');
+    }
+  };
+
+  const handleEdit = (event: Event) => {
+    const options = parseEventOptions(event.Options);
+    setEditingEvent(event);
+    setFormData({
+      EventName: event.EventName,
+      Description: event.Description || '',
+      Hotels: options.Hotels?.join(', ') || '',
+      Rooms: options.Rooms?.join(', ') || ''
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editingEvent) return;
+    if (!formData.EventName.trim()) {
+      alert('Event name is required');
+      return;
+    }
+
+    try {
+      // Build Options JSON
+      const options: EventOptions = {};
+      if (formData.Hotels.trim()) {
+        options.Hotels = formData.Hotels.split(',').map(h => h.trim()).filter(Boolean);
+      }
+      if (formData.Rooms.trim()) {
+        options.Rooms = formData.Rooms.split(',').map(r => r.trim()).filter(Boolean);
+      }
+
+      await updateEvent.mutateAsync({
+        eventId: editingEvent.ID.toString(),
+        data: {
+          EventName: formData.EventName,
+          Description: formData.Description || '',
+          Options: stringifyEventOptions(options),
+          UserID: '1' // Hardcoded for now
+        }
+      });
+
+      resetForm();
+    } catch (err) {
+      console.error('Update error:', err);
+      alert('Failed to update event. Please check console for details.');
+    }
+  };
+
+  const handleDelete = async (eventId: number) => {
+    if (!confirm('Are you sure you want to delete this event?')) return;
+
+    try {
+      await deleteEvent.mutateAsync(eventId.toString());
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Failed to delete event. Please check console for details.');
+    }
+  };
+
+  // Calculate statistics for each event (placeholder - would need separate API calls)
+  const getEventStats = (eventId: number) => {
+    // TODO: Fetch guest count for each event
+    return { guestCount: 0, hotelCount: 0, roomCount: 0 };
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,59 +156,99 @@ export default function EventsPage() {
             </div>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isLoading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Event
             </button>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              Failed to load events. Check API configuration and auth token.
+              <br />
+              <small className="text-xs">Error: {error.message}</small>
+            </div>
+          )}
+
           {/* Form Modal */}
           {(showCreateForm || editingEvent) && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
                 <div className="mt-3">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
                     {editingEvent ? 'Edit Event' : 'Create New Event'}
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Event Name</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Event Name *
+                      </label>
                       <input
                         type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        value={formData.EventName}
+                        onChange={(e) => setFormData({ ...formData, EventName: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter event name"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                      <input
-                        type="datetime-local"
-                        value={formData.startDate}
-                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      <label className="block text-sm font-medium text-gray-700">Description</label>
+                      <textarea
+                        value={formData.Description}
+                        onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter event description"
+                        rows={3}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">End Date</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Hotels (comma-separated)
+                      </label>
                       <input
-                        type="datetime-local"
-                        value={formData.endDate}
-                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                        type="text"
+                        value={formData.Hotels}
+                        onChange={(e) => setFormData({ ...formData, Hotels: e.target.value })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., Hotel A, Hotel B, Hotel C"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Rooms (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.Rooms}
+                        onChange={(e) => setFormData({ ...formData, Rooms: e.target.value })}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., Room 101, Room 102, Suite A"
                       />
                     </div>
                     <div className="flex space-x-3 pt-4">
                       <button
                         onClick={editingEvent ? handleUpdate : handleCreate}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        disabled={
+                          (editingEvent ? updateEvent.isPending : createEvent.isPending) ||
+                          !formData.EventName.trim()
+                        }
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingEvent ? 'Update Event' : 'Create Event'}
+                        {editingEvent
+                          ? updateEvent.isPending
+                            ? 'Updating...'
+                            : 'Update Event'
+                          : createEvent.isPending
+                            ? 'Creating...'
+                            : 'Create Event'}
                       </button>
                       <button
                         onClick={resetForm}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                        disabled={createEvent.isPending || updateEvent.isPending}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -197,79 +261,99 @@ export default function EventsPage() {
 
           {/* Events Table */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Event Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Start Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    End Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Participants
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Assignments
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Options
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {events.map((event) => (
-                  <tr key={event.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {event.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(event.startDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(event.endDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {event.participants}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {event.assignments}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {event.options}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(event)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(event.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2 text-gray-500">Loading events...</p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Event Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hotels
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rooms
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {events.length === 0 && (
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {data?.Data?.map((event) => {
+                    const options = parseEventOptions(event.Options);
+                    return (
+                      <tr key={event.ID}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          #{event.ID}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {event.EventName}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                          {event.Description || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {options.Hotels?.length ? options.Hotels.join(', ') : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {options.Rooms?.length ? options.Rooms.join(', ') : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(event.CreatedAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(event)}
+                            disabled={deleteEvent.isPending}
+                            className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(event.ID)}
+                            disabled={deleteEvent.isPending}
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          >
+                            {deleteEvent.isPending ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            {!isLoading && (!data?.Data || data.Data.length === 0) && (
               <div className="text-center py-8 text-gray-500">
                 No events found. Create your first event above.
               </div>
             )}
           </div>
+
+          {/* Pagination Info */}
+          {data?.Pagination && data.Pagination.TotalData > 0 && (
+            <div className="mt-4 text-sm text-gray-500 text-center">
+              Showing {data.Data.length} of {data.Pagination.TotalData} events (Page{' '}
+              {data.Pagination.Page} of {data.Pagination.TotalPage})
+            </div>
+          )}
         </div>
       </main>
     </div>
-  )
+  );
 }

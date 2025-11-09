@@ -14,6 +14,12 @@ export function ServiceWorkerProvider(): null {
       return;
     }
 
+    // Skip service worker registration in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("Service worker disabled in development mode");
+      return;
+    }
+
     if (!workboxRef.current) {
       workboxRef.current = new Workbox(SERVICE_WORKER_URL, {
         scope: "/"

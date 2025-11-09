@@ -12,6 +12,7 @@ import type {
   LoginResponse,
   UpdateEventRequest,
   UpdateGuestRequest,
+  UpdateUserRequest,
   User
 } from "./index";
 
@@ -23,26 +24,18 @@ export const queryKeys = {
   events: {
     all: ["events"] as const,
     lists: () => [...queryKeys.events.all, "list"] as const,
-    list: (params?: ListQueryParams) => [...queryKeys.events.lists(), params] as const,
-    details: () => [...queryKeys.events.all, "detail"] as const,
-    detail: (id: string) => [...queryKeys.events.details(), id] as const
+    list: (params?: ListQueryParams) => [...queryKeys.events.lists(), params] as const
   },
   guests: {
     all: ["guests"] as const,
     lists: () => [...queryKeys.guests.all, "list"] as const,
-    list: (eventId: string, params?: ListQueryParams) =>
-      [...queryKeys.guests.lists(), eventId, params] as const,
-    details: () => [...queryKeys.guests.all, "detail"] as const,
-    detail: (eventId: string, guestId: string) =>
-      [...queryKeys.guests.details(), eventId, guestId] as const
+    list: (eventId?: number, params?: ListQueryParams) =>
+      [...queryKeys.guests.lists(), eventId, params] as const
   },
   users: {
     all: ["users"] as const,
     lists: () => [...queryKeys.users.all, "list"] as const,
-    list: (params?: ListQueryParams) => [...queryKeys.users.lists(), params] as const,
-    details: () => [...queryKeys.users.all, "detail"] as const,
-    detail: (id: string) => [...queryKeys.users.details(), id] as const,
-    me: () => [...queryKeys.users.all, "me"] as const
+    list: (params?: ListQueryParams) => [...queryKeys.users.lists(), params] as const
   }
 };
 
@@ -57,21 +50,12 @@ export function useEvents(params?: ListQueryParams) {
   });
 }
 
-export function useEvent(eventId: string) {
-  return useQuery<ApiResponse<Event>>({
-    queryKey: queryKeys.events.detail(eventId),
-    queryFn: () => eventApi.getById(eventId),
-    enabled: !!eventId
-  });
-}
-
 export function useCreateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: CreateEventRequest) => eventApi.create(data),
     onSuccess: () => {
-      // Invalidate events list to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
     }
   });
@@ -81,11 +65,9 @@ export function useUpdateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ eventId, data }: { eventId: string; data: UpdateEventRequest }) =>
+    mutationFn: ({ eventId, data }: { eventId: number; data: UpdateEventRequest }) =>
       eventApi.update(eventId, data),
-    onSuccess: (_, variables) => {
-      // Invalidate the specific event and the list
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.eventId) });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
     }
   });
@@ -95,7 +77,7 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (eventId: string) => eventApi.delete(eventId),
+    mutationFn: (eventId: number) => eventApi.delete(eventId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
     }
@@ -106,19 +88,10 @@ export function useDeleteEvent() {
 // Guest Hooks
 // ============================================================================
 
-export function useGuests(eventId: string, params?: ListQueryParams) {
+export function useGuests(eventId?: number, params?: ListQueryParams) {
   return useQuery<ApiListResponse<Guest>>({
     queryKey: queryKeys.guests.list(eventId, params),
-    queryFn: () => guestApi.list(eventId, params),
-    enabled: !!eventId
-  });
-}
-
-export function useGuest(eventId: string, guestId: string) {
-  return useQuery<ApiResponse<Guest>>({
-    queryKey: queryKeys.guests.detail(eventId, guestId),
-    queryFn: () => guestApi.getById(eventId, guestId),
-    enabled: !!eventId && !!guestId
+    queryFn: () => guestApi.list(eventId, params)
   });
 }
 
@@ -126,14 +99,9 @@ export function useCreateGuest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ eventId, data }: { eventId: string; data: CreateGuestRequest }) =>
-      guestApi.create(eventId, data),
-    onSuccess: (_, variables) => {
+    mutationFn: (data: CreateGuestRequest) => guestApi.create(data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
-      // Also invalidate the specific event's guest list
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.guests.list(variables.eventId)
-      });
     }
   });
 }
@@ -142,22 +110,10 @@ export function useUpdateGuest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      eventId,
-      guestId,
-      data
-    }: {
-      eventId: string;
-      guestId: string;
-      data: UpdateGuestRequest;
-    }) => guestApi.update(eventId, guestId, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.guests.detail(variables.eventId, variables.guestId)
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.guests.list(variables.eventId)
-      });
+    mutationFn: ({ guestId, data }: { guestId: number; data: UpdateGuestRequest }) =>
+      guestApi.update(guestId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
     }
   });
 }
@@ -166,12 +122,20 @@ export function useDeleteGuest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ eventId, guestId }: { eventId: string; guestId: string }) =>
-      guestApi.delete(eventId, guestId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.guests.list(variables.eventId)
-      });
+    mutationFn: (guestId: number) => guestApi.delete(guestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
+    }
+  });
+}
+
+export function useCheckinGuest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (guestId: number) => guestApi.checkin(guestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.guests.lists() });
     }
   });
 }
@@ -187,14 +151,6 @@ export function useUsers(params?: ListQueryParams) {
   });
 }
 
-export function useUser(userId: string) {
-  return useQuery<ApiResponse<User>>({
-    queryKey: queryKeys.users.detail(userId),
-    queryFn: () => userApi.getById(userId),
-    enabled: !!userId
-  });
-}
-
 export function useCreateUser() {
   const queryClient = useQueryClient();
 
@@ -206,12 +162,26 @@ export function useCreateUser() {
   });
 }
 
-export function useCurrentUser() {
-  return useQuery<ApiResponse<User>>({
-    queryKey: queryKeys.users.me(),
-    queryFn: () => userApi.me(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: false // Don't retry if not authenticated
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: number; data: UpdateUserRequest }) =>
+      userApi.update(userId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
+    }
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: number) => userApi.delete(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
+    }
   });
 }
 

@@ -27,8 +27,8 @@ export default function Dashboard() {
 
   // Calculate statistics from real data
   const stats = {
-    events: eventsData?.Pagination?.TotalData || 0,
-    users: usersData?.Pagination?.TotalData || 0,
+    events: eventsData?.pagination?.totalRows || 0,
+    users: usersData?.pagination?.totalRows || 0,
     // Note: Guests count would need to aggregate across all events
     // For now, we'll show a placeholder
     guests: '—',
@@ -173,21 +173,21 @@ export default function Dashboard() {
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 <p className="mt-2 text-gray-500">Loading events...</p>
               </div>
-            ) : eventsData?.Data && eventsData.Data.length > 0 ? (
+            ) : eventsData?.data && eventsData.data.length > 0 ? (
               <ul className="divide-y divide-gray-200">
-                {eventsData.Data.map((event) => {
-                  const options = parseEventOptions(event.Options);
+                {eventsData.data.map((event) => {
+                  const options = parseEventOptions(event.options);
                   return (
-                    <li key={event.ID} className="px-6 py-4">
+                    <li key={event.eventID} className="px-6 py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <div>
                               <h3 className="text-lg font-medium text-gray-900">
-                                {event.EventName}
+                                {event.eventName}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                {event.Description || 'No description'}
+                                {event.description || 'No description'}
                               </p>
                               <div className="mt-2 flex space-x-4 text-sm text-gray-500">
                                 <span>
@@ -197,7 +197,7 @@ export default function Dashboard() {
                                   {options.Rooms?.length || 0} rooms
                                 </span>
                                 <span>
-                                  Created {new Date(event.CreatedAt).toLocaleDateString()}
+                                  Created {new Date(event.createdAt).toLocaleDateString()}
                                 </span>
                               </div>
                             </div>

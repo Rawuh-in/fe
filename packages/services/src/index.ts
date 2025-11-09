@@ -2,27 +2,27 @@ import ky, { type KyInstance } from "ky";
 import { z } from "zod";
 
 // ============================================================================
-// Base Response Types (matching Go backend structure)
+// Base Response Types (matching actual backend API from Swagger spec)
 // ============================================================================
 
 export const paginationSchema = z.object({
-  Page: z.number(),
-  Limit: z.number(),
-  TotalPage: z.number(),
-  TotalData: z.number()
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+  totalRows: z.number()
 });
 
 export type Pagination = z.infer<typeof paginationSchema>;
 
 export interface ApiResponse<T> {
-  Error: boolean;
-  Code: number;
-  Message: string;
-  Data: T;
+  error: boolean;
+  code: number;
+  message: string;
+  data: T;
 }
 
 export interface ApiListResponse<T> extends ApiResponse<T[]> {
-  Pagination: Pagination;
+  pagination: Pagination;
 }
 
 // ============================================================================
@@ -30,45 +30,42 @@ export interface ApiListResponse<T> extends ApiResponse<T[]> {
 // ============================================================================
 
 export const guestSchema = z.object({
-  ID: z.number(),
-  ProjectID: z.number(),
-  EventId: z.number(),
-  Name: z.string(),
-  Address: z.string().optional(),
-  Phone: z.string().optional(),
-  Email: z.string().optional(),
-  Options: z.string(), // JSON string for hotel/room assignments
-  CreatedAt: z.string(),
-  UpdatedAt: z.string(),
-  DeletedAt: z.string().nullable().optional()
+  guestID: z.number(),
+  projectID: z.number(),
+  eventID: z.number(),
+  guestName: z.string(),
+  email: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  customData: z.string(), // JSON string for hotel/room assignments
+  qrCode: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
 });
 
 export type Guest = z.infer<typeof guestSchema>;
 
-export interface GuestOptions {
-  Hotel?: string;
-  Room?: string;
-  CheckInDate?: string;
-  CheckOutDate?: string;
-  CheckedInAt?: string;
+export interface GuestCustomData {
+  hotel?: string;
+  room?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  checkedInAt?: string;
   [key: string]: unknown; // Allow custom fields
 }
 
 export interface CreateGuestRequest {
-  Name: string;
-  Address?: string;
-  Phone?: string;
-  Email?: string;
-  EventId: string;
-  Options?: string; // JSON string
+  guestName: string;
+  email?: string;
+  phoneNumber?: string;
+  customData?: string; // JSON string
+  eventID: number;
 }
 
 export interface UpdateGuestRequest {
-  Name: string;
-  Address?: string;
-  Phone?: string;
-  Email?: string;
-  Options?: string; // JSON string
+  guestName: string;
+  email?: string;
+  phoneNumber?: string;
+  customData?: string; // JSON string
 }
 
 // ============================================================================
@@ -76,15 +73,13 @@ export interface UpdateGuestRequest {
 // ============================================================================
 
 export const eventSchema = z.object({
-  ID: z.number(),
-  ProjectID: z.number(),
-  UserID: z.number(),
-  EventName: z.string(),
-  Description: z.string().optional(),
-  Options: z.string(), // JSON string: {"Hotels":["A","B"],"Rooms":["1","2"]}
-  CreatedAt: z.string(),
-  UpdatedAt: z.string(),
-  DeletedAt: z.string().nullable().optional()
+  eventID: z.number(),
+  projectID: z.number(),
+  eventName: z.string(),
+  description: z.string().optional(),
+  options: z.string(), // JSON string: {"Hotels":["A","B"],"Rooms":["1","2"]}
+  createdAt: z.string(),
+  updatedAt: z.string()
 });
 
 export type Event = z.infer<typeof eventSchema>;
@@ -96,17 +91,15 @@ export interface EventOptions {
 }
 
 export interface CreateEventRequest {
-  EventName: string;
-  Description?: string;
-  Options?: string; // JSON string
-  UserID: string;
+  eventName: string;
+  description?: string;
+  options?: string; // JSON string
 }
 
 export interface UpdateEventRequest {
-  EventName: string;
-  Description?: string;
-  Options?: string; // JSON string
-  UserID: string;
+  eventName: string;
+  description?: string;
+  options?: string; // JSON string
 }
 
 // ============================================================================
@@ -114,38 +107,32 @@ export interface UpdateEventRequest {
 // ============================================================================
 
 export const userSchema = z.object({
-  ID: z.number(),
-  ProjectID: z.number(),
-  EventId: z.number().optional(),
-  Name: z.string(),
-  UserType: z.enum(["SYSTEM_ADMIN", "PROJECT_USER"]),
-  Username: z.string(),
-  Email: z.string(),
-  CreatedAt: z.string(),
-  UpdatedAt: z.string(),
-  DeletedAt: z.string().nullable().optional()
+  userID: z.number(),
+  username: z.string(),
+  role: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
 });
 
 export type User = z.infer<typeof userSchema>;
 
 export interface CreateUserRequest {
-  Name: string;
-  UserType: "SYSTEM_ADMIN" | "PROJECT_USER";
-  Username: string;
-  Email: string;
-  ProjectID: string;
-  Password: string;
-  EventId?: string;
+  username: string;
+  password: string;
+  role: string;
+}
+
+export interface UpdateUserRequest {
+  username?: string;
+  password?: string;
+  role?: string;
 }
 
 export interface LoginResponse {
-  Error: boolean;
-  Code: number;
-  Message: string;
-  Data: {
-    AccessToken: string;
-    User: User;
-  };
+  error: boolean;
+  code: number;
+  message: string;
+  access_token: string;
 }
 
 // ============================================================================
@@ -212,43 +199,42 @@ const PROJECT_ID = "1";
 
 // Guest API
 export const guestApi = {
-  list: async (eventId: string, params?: ListQueryParams): Promise<ApiListResponse<Guest>> => {
+  list: async (eventId?: number, params?: ListQueryParams): Promise<ApiListResponse<Guest>> => {
     const searchParams = new URLSearchParams();
-    if (params?.sort) searchParams.set("sort", params.sort);
-    if (params?.dir) searchParams.set("dir", params.dir);
+    if (eventId) searchParams.set("eventID", eventId.toString());
     if (params?.page) searchParams.set("page", params.page.toString());
     if (params?.limit) searchParams.set("limit", params.limit.toString());
-    if (params?.query) searchParams.set("query", params.query);
 
     return apiClient
-      .get(`${PROJECT_ID}/events/${eventId}/guests/list?${searchParams.toString()}`)
+      .get(`${PROJECT_ID}/guests/list?${searchParams.toString()}`)
       .json<ApiListResponse<Guest>>();
   },
 
-  getById: async (eventId: string, guestId: string): Promise<ApiResponse<Guest>> => {
+  create: async (data: CreateGuestRequest): Promise<ApiResponse<Guest>> => {
     return apiClient
-      .get(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`)
-      .json<ApiResponse<Guest>>();
-  },
-
-  create: async (eventId: string, data: CreateGuestRequest): Promise<ApiResponse<Guest>> => {
-    return apiClient
-      .post(`${PROJECT_ID}/events/${eventId}/guests`, { json: data })
+      .post(`${PROJECT_ID}/guests/add`, { json: data })
       .json<ApiResponse<Guest>>();
   },
 
   update: async (
-    eventId: string,
-    guestId: string,
+    guestId: number,
     data: UpdateGuestRequest
-  ): Promise<ApiResponse<Guest>> => {
+  ): Promise<ApiResponse<void>> => {
     return apiClient
-      .put(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`, { json: data })
-      .json<ApiResponse<Guest>>();
+      .put(`${PROJECT_ID}/guests/edit/${guestId}`, { json: data })
+      .json<ApiResponse<void>>();
   },
 
-  delete: async (eventId: string, guestId: string): Promise<void> => {
-    await apiClient.delete(`${PROJECT_ID}/events/${eventId}/guests/${guestId}`);
+  delete: async (guestId: number): Promise<ApiResponse<void>> => {
+    return apiClient
+      .delete(`${PROJECT_ID}/guests/delete/${guestId}`)
+      .json<ApiResponse<void>>();
+  },
+
+  checkin: async (guestId: number): Promise<ApiResponse<void>> => {
+    return apiClient
+      .post(`${PROJECT_ID}/guests/checkin/${guestId}`)
+      .json<ApiResponse<void>>();
   }
 };
 
@@ -256,71 +242,62 @@ export const guestApi = {
 export const eventApi = {
   list: async (params?: ListQueryParams): Promise<ApiListResponse<Event>> => {
     const searchParams = new URLSearchParams();
-    if (params?.sort) searchParams.set("sort", params.sort);
-    if (params?.dir) searchParams.set("dir", params.dir);
     if (params?.page) searchParams.set("page", params.page.toString());
     if (params?.limit) searchParams.set("limit", params.limit.toString());
-    if (params?.query) searchParams.set("query", params.query);
 
     return apiClient
       .get(`${PROJECT_ID}/events/list?${searchParams.toString()}`)
       .json<ApiListResponse<Event>>();
   },
 
-  getById: async (eventId: string): Promise<ApiResponse<Event>> => {
-    return apiClient.get(`${PROJECT_ID}/events/${eventId}`).json<ApiResponse<Event>>();
-  },
-
   create: async (data: CreateEventRequest): Promise<ApiResponse<Event>> => {
-    return apiClient.post(`${PROJECT_ID}/events`, { json: data }).json<ApiResponse<Event>>();
-  },
-
-  update: async (eventId: string, data: UpdateEventRequest): Promise<ApiResponse<Event>> => {
     return apiClient
-      .put(`${PROJECT_ID}/events/${eventId}`, { json: data })
+      .post(`${PROJECT_ID}/events/add`, { json: data })
       .json<ApiResponse<Event>>();
   },
 
-  delete: async (eventId: string): Promise<void> => {
-    await apiClient.delete(`${PROJECT_ID}/events/${eventId}`);
+  update: async (eventId: number, data: UpdateEventRequest): Promise<ApiResponse<void>> => {
+    return apiClient
+      .put(`${PROJECT_ID}/events/edit/${eventId}`, { json: data })
+      .json<ApiResponse<void>>();
+  },
+
+  delete: async (eventId: number): Promise<ApiResponse<void>> => {
+    return apiClient
+      .delete(`${PROJECT_ID}/events/delete/${eventId}`)
+      .json<ApiResponse<void>>();
   }
 };
 
-// User API (Note: Users are not scoped by project in the endpoints shown)
+// User API
 export const userApi = {
   list: async (params?: ListQueryParams): Promise<ApiListResponse<User>> => {
     const searchParams = new URLSearchParams();
-    if (params?.sort) searchParams.set("sort", params.sort);
-    if (params?.dir) searchParams.set("dir", params.dir);
     if (params?.page) searchParams.set("page", params.page.toString());
     if (params?.limit) searchParams.set("limit", params.limit.toString());
-    if (params?.query) searchParams.set("query", params.query);
 
-    return apiClient.get(`users/list?${searchParams.toString()}`).json<ApiListResponse<User>>();
-  },
-
-  getById: async (userId: string): Promise<ApiResponse<User>> => {
-    return apiClient.get(`users/${userId}`).json<ApiResponse<User>>();
+    return apiClient.get(`users?${searchParams.toString()}`).json<ApiListResponse<User>>();
   },
 
   create: async (data: CreateUserRequest): Promise<ApiResponse<User>> => {
     return apiClient.post("users", { json: data }).json<ApiResponse<User>>();
   },
 
-  me: async (): Promise<ApiResponse<User>> => {
-    return apiClient.get("auth/me").json<ApiResponse<User>>();
+  update: async (userId: number, data: UpdateUserRequest): Promise<ApiResponse<void>> => {
+    return apiClient.put(`users/${userId}`, { json: data }).json<ApiResponse<void>>();
+  },
+
+  delete: async (userId: number): Promise<ApiResponse<void>> => {
+    return apiClient.delete(`users/${userId}`).json<ApiResponse<void>>();
   }
 };
 
 // Auth API
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    const credentials = btoa(`${username}:${password}`);
     return apiClient
       .post("login", {
-        headers: {
-          Authorization: `Basic ${credentials}`
-        }
+        json: { username, password }
       })
       .json<LoginResponse>();
   }
@@ -330,16 +307,16 @@ export const authApi = {
 // Helper Functions
 // ============================================================================
 
-export const parseGuestOptions = (optionsJson: string): GuestOptions => {
+export const parseGuestCustomData = (customDataJson: string): GuestCustomData => {
   try {
-    return JSON.parse(optionsJson || "{}");
+    return JSON.parse(customDataJson || "{}");
   } catch {
     return {};
   }
 };
 
-export const stringifyGuestOptions = (options: GuestOptions): string => {
-  return JSON.stringify(options);
+export const stringifyGuestCustomData = (customData: GuestCustomData): string => {
+  return JSON.stringify(customData);
 };
 
 export const parseEventOptions = (optionsJson: string): EventOptions => {

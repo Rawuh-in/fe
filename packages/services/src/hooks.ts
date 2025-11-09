@@ -249,7 +249,10 @@ export function useLogin() {
       }
 
       if (token && typeof window !== "undefined") {
-        localStorage.setItem("authToken", token);
+        // Strip "Bearer " prefix if it exists
+        const cleanToken = token.replace(/^Bearer\s+/i, '');
+        console.log('Storing token (cleaned):', cleanToken);
+        localStorage.setItem("authToken", cleanToken);
         // Invalidate all queries to refetch with new auth
         queryClient.invalidateQueries();
       } else {

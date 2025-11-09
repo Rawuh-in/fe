@@ -6,7 +6,11 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
-  const { data: eventsData, isLoading: eventsLoading } = useEvents({ limit: 10, sort: 'created_at', dir: 'desc' });
+  const { data: eventsData, isLoading: eventsLoading } = useEvents({
+    limit: 10,
+    sort: 'created_at',
+    dir: 'desc',
+  });
   const { data: usersData, isLoading: usersLoading } = useUsers({ limit: 1 }); // Just for count
 
   // Show loading while checking authentication
@@ -27,14 +31,22 @@ export default function Dashboard() {
 
   // Calculate statistics from real data (handle both field naming conventions)
   const stats = {
-    events: eventsData?.pagination?.totalRows || eventsData?.Pagination?.TotalData ||
-            eventsData?.pagination?.TotalData || eventsData?.data?.length || 0,
-    users: usersData?.pagination?.totalRows || usersData?.Pagination?.TotalData ||
-           usersData?.pagination?.TotalData || usersData?.data?.length || 0,
+    events:
+      eventsData?.pagination?.totalRows ||
+      eventsData?.Pagination?.TotalData ||
+      eventsData?.pagination?.TotalData ||
+      eventsData?.data?.length ||
+      0,
+    users:
+      usersData?.pagination?.totalRows ||
+      usersData?.Pagination?.TotalData ||
+      usersData?.pagination?.TotalData ||
+      usersData?.data?.length ||
+      0,
     // Note: Guests count would need to aggregate across all events
     // For now, we'll show a placeholder
     guests: '—',
-    assignments: '—'
+    assignments: '—',
   };
 
   const isLoading = eventsLoading || usersLoading;
@@ -135,9 +147,7 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Guests</h3>
-                  <p className="text-3xl font-bold text-purple-600">
-                    {stats.guests}
-                  </p>
+                  <p className="text-3xl font-bold text-purple-600">{stats.guests}</p>
                   <small className="text-xs text-gray-500">Select event to view</small>
                 </div>
               </div>
@@ -175,10 +185,13 @@ export default function Dashboard() {
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 <p className="mt-2 text-gray-500">Loading events...</p>
               </div>
-            ) : (eventsData?.data || eventsData?.Data) && (eventsData?.data?.length || eventsData?.Data?.length) > 0 ? (
+            ) : (eventsData?.data || eventsData?.Data) &&
+              ((eventsData?.data?.length ?? 0) || (eventsData?.Data?.length ?? 0)) > 0 ? (
               <ul className="divide-y divide-gray-200">
                 {(eventsData.data || eventsData.Data || []).map((event, index) => {
-                  const options = parseEventOptions(event.options || event.Options);
+                  const options = parseEventOptions(
+                    event.options || event.Options || '{}'
+                  );
                   return (
                     <li key={event.eventID || event.ID || index} className="px-6 py-4">
                       <div className="flex items-center justify-between">
@@ -189,17 +202,20 @@ export default function Dashboard() {
                                 {event.eventName || event.EventName}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                {event.description || event.Description || 'No description'}
+                                {event.description ||
+                                  event.Description ||
+                                  'No description'}
                               </p>
                               <div className="mt-2 flex space-x-4 text-sm text-gray-500">
+                                <span>{options.Hotels?.length || 0} hotels</span>
+                                <span>{options.Rooms?.length || 0} rooms</span>
                                 <span>
-                                  {options.Hotels?.length || 0} hotels
-                                </span>
-                                <span>
-                                  {options.Rooms?.length || 0} rooms
-                                </span>
-                                <span>
-                                  Created {new Date(event.createdAt || event.CreatedAt).toLocaleDateString()}
+                                  Created{' '}
+                                  {event.createdAt || event.CreatedAt
+                                    ? new Date(
+                                        (event.createdAt || event.CreatedAt)!
+                                      ).toLocaleDateString()
+                                    : '-'}
                                 </span>
                               </div>
                             </div>
@@ -259,7 +275,9 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600">
                     Manage Staff Users
                   </h3>
-                  <p className="mt-1 text-gray-600">Add system administrators and staff</p>
+                  <p className="mt-1 text-gray-600">
+                    Add system administrators and staff
+                  </p>
                 </div>
                 <span className="text-3xl">👥</span>
               </div>
@@ -274,9 +292,7 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600">
                     Manage Guests
                   </h3>
-                  <p className="mt-1 text-gray-600">
-                    Add event guests with custom data
-                  </p>
+                  <p className="mt-1 text-gray-600">Add event guests with custom data</p>
                 </div>
                 <span className="text-3xl">🎫</span>
               </div>

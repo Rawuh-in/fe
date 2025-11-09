@@ -55,10 +55,9 @@ export default function EventsPage() {
       }
 
       await createEvent.mutateAsync({
-        EventName: formData.EventName,
-        Description: formData.Description || '',
-        Options: stringifyEventOptions(options),
-        UserID: '1', // Hardcoded for now
+        eventName: formData.EventName,
+        description: formData.Description || undefined,
+        options: stringifyEventOptions(options),
       });
 
       resetForm();
@@ -69,10 +68,10 @@ export default function EventsPage() {
   };
 
   const handleEdit = (event: Event) => {
-    const options = parseEventOptions(event.Options);
+    const options = parseEventOptions(event.Options || '{}');
     setEditingEvent(event);
     setFormData({
-      EventName: event.EventName,
+      EventName: event.EventName || '',
       Description: event.Description || '',
       Hotels: options.Hotels?.join(', ') || '',
       Rooms: options.Rooms?.join(', ') || '',
@@ -101,12 +100,11 @@ export default function EventsPage() {
       }
 
       await updateEvent.mutateAsync({
-        eventId: editingEvent.ID.toString(),
+        eventId: editingEvent.ID!,
         data: {
-          EventName: formData.EventName,
-          Description: formData.Description || '',
-          Options: stringifyEventOptions(options),
-          UserID: '1', // Hardcoded for now
+          eventName: formData.EventName,
+          description: formData.Description || undefined,
+          options: stringifyEventOptions(options),
         },
       });
 
@@ -121,7 +119,7 @@ export default function EventsPage() {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
     try {
-      await deleteEvent.mutateAsync(eventId.toString());
+      await deleteEvent.mutateAsync(eventId);
     } catch (err) {
       console.error('Delete error:', err);
       alert('Failed to delete event. Please check console for details.');
@@ -314,7 +312,7 @@ export default function EventsPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {data?.Data?.map((event) => {
-                    const options = parseEventOptions(event.Options);
+                    const options = parseEventOptions(event.Options || '{}');
                     return (
                       <tr key={event.ID}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -333,7 +331,9 @@ export default function EventsPage() {
                           {options.Rooms?.length ? options.Rooms.join(', ') : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(event.CreatedAt).toLocaleDateString()}
+                          {event.CreatedAt
+                            ? new Date(event.CreatedAt).toLocaleDateString()
+                            : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
@@ -344,7 +344,7 @@ export default function EventsPage() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(event.ID)}
+                            onClick={() => handleDelete(event.ID!)}
                             disabled={deleteEvent.isPending}
                             className="text-red-600 hover:text-red-900 disabled:opacity-50"
                           >
@@ -365,9 +365,9 @@ export default function EventsPage() {
           </div>
 
           {/* Pagination Info */}
-          {data?.Pagination && data.Pagination.TotalData > 0 && (
+          {data?.Pagination && (data.Pagination.TotalData ?? 0) > 0 && (
             <div className="mt-4 text-sm text-gray-500 text-center">
-              Showing {data.Data.length} of {data.Pagination.TotalData} events (Page{' '}
+              Showing {data.Data?.length ?? 0} of {data.Pagination.TotalData} events (Page{' '}
               {data.Pagination.Page} of {data.Pagination.TotalPage})
             </div>
           )}

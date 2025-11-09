@@ -43,13 +43,9 @@ export default function UsersPage() {
 
     try {
       await createUser.mutateAsync({
-        Name: formData.Name,
-        Email: formData.Email,
-        Username: formData.Username,
-        Password: formData.Password,
-        UserType: formData.UserType,
-        ProjectID: '1', // Hardcoded
-        EventId: formData.EventId || undefined,
+        username: formData.Username,
+        password: formData.Password,
+        role: formData.UserType,
       });
 
       resetForm();
@@ -291,10 +287,12 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.ProjectID}
+                        {user.ProjectID ? String(user.ProjectID) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(user.CreatedAt).toLocaleDateString()}
+                        {user.CreatedAt
+                          ? new Date(user.CreatedAt).toLocaleDateString()
+                          : '-'}
                       </td>
                     </tr>
                   ))}
@@ -309,9 +307,9 @@ export default function UsersPage() {
           </div>
 
           {/* Pagination Info */}
-          {data?.Pagination && data.Pagination.TotalData > 0 && (
+          {data?.Pagination && (data.Pagination.TotalData ?? 0) > 0 && (
             <div className="mt-4 text-sm text-gray-500 text-center">
-              Showing {data.Data.length} of {data.Pagination.TotalData} users (Page{' '}
+              Showing {data.Data?.length ?? 0} of {data.Pagination.TotalData} users (Page{' '}
               {data.Pagination.Page} of {data.Pagination.TotalPage})
             </div>
           )}

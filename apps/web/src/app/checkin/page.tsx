@@ -9,38 +9,38 @@ import {
   parseGuestOptions,
   stringifyGuestOptions,
   type Guest,
-  type GuestOptions
 } from '@event-organizer/services';
 
 export default function CheckInPage() {
-  const [selectedEventId, setSelectedEventId] = useState('1');
+  const [selectedEventId, setSelectedEventId] = useState(1);
   const [manualGuestId, setManualGuestId] = useState('');
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<Guest | null>(null);
 
   const { data: eventsData } = useEvents();
-  const { data: guestsData, isLoading } = useGuests(selectedEventId, { sort: 'name', dir: 'asc' });
+  const { data: guestsData, isLoading } = useGuests(selectedEventId, {
+    sort: 'name',
+    dir: 'asc',
+  });
   const updateGuest = useUpdateGuest();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCheckIn = async (guest: Guest) => {
     try {
-      const options: GuestOptions = parseGuestOptions(guest.Options);
+      const options = parseGuestOptions(guest.Options || '{}');
 
       // Add check-in timestamp
       options.CheckedInAt = new Date().toISOString();
 
       await updateGuest.mutateAsync({
-        eventId: selectedEventId,
-        guestId: guest.ID.toString(),
+        guestId: guest.ID!,
         data: {
-          Name: guest.Name,
-          Email: guest.Email,
-          Phone: guest.Phone,
-          Address: guest.Address,
-          Options: stringifyGuestOptions(options)
-        }
+          guestName: guest.Name!,
+          email: guest.Email,
+          phoneNumber: guest.Phone,
+          customData: stringifyGuestOptions(options),
+        },
       });
 
       setLastScanned(guest);
@@ -98,14 +98,14 @@ export default function CheckInPage() {
   };
 
   const getCheckInStatus = (guest: Guest) => {
-    const options = parseGuestOptions(guest.Options);
+    const options = parseGuestOptions(guest.Options || '{}');
     return options.CheckedInAt ? 'checked_in' : 'not_checked_in';
   };
 
   const getCheckInTime = (guest: Guest) => {
-    const options = parseGuestOptions(guest.Options);
+    const options = parseGuestOptions(guest.Options || '{}');
     return options.CheckedInAt
-      ? new Date(options.CheckedInAt).toLocaleString()
+      ? new Date(options.CheckedInAt as string).toLocaleString()
       : null;
   };
 
@@ -120,7 +120,8 @@ export default function CheckInPage() {
     }
   };
 
-  const checkedInCount = guestsData?.Data?.filter(g => getCheckInStatus(g) === 'checked_in').length || 0;
+  const checkedInCount =
+    guestsData?.Data?.filter((g) => getCheckInStatus(g) === 'checked_in').length || 0;
   const totalCount = guestsData?.Data?.length || 0;
 
   return (
@@ -157,7 +158,7 @@ export default function CheckInPage() {
               <label className="text-sm font-medium text-gray-700">Event:</label>
               <select
                 value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                onChange={(e) => setSelectedEventId(Number(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 {eventsData?.Data?.map((event) => (
@@ -204,7 +205,9 @@ export default function CheckInPage() {
 
             {/* QR Code Scanner */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code Scanner</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                QR Code Scanner
+              </h3>
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
                   Upload a QR code image to check in a guest

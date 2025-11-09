@@ -21,7 +21,7 @@ interface GeneratedQR {
 }
 
 export default function QRManagementPage() {
-  const [selectedEventId, setSelectedEventId] = useState('1');
+  const [selectedEventId, setSelectedEventId] = useState(1);
   const [generatedQRs, setGeneratedQRs] = useState<GeneratedQR[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -42,11 +42,11 @@ export default function QRManagementPage() {
       },
     });
 
-    const options = parseGuestOptions(guest.Options);
+    const options = parseGuestOptions(guest.Options || '{}');
 
     return {
-      guestId: guest.ID,
-      guestName: guest.Name,
+      guestId: guest.ID!,
+      guestName: guest.Name!,
       guestEmail: guest.Email || '',
       hotel: options.Hotel as string | undefined,
       room: options.Room as string | undefined,
@@ -174,7 +174,7 @@ export default function QRManagementPage() {
                   <select
                     value={selectedEventId}
                     onChange={(e) => {
-                      setSelectedEventId(e.target.value);
+                      setSelectedEventId(Number(e.target.value));
                       setGeneratedQRs([]);
                     }}
                     className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -271,8 +271,8 @@ export default function QRManagementPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {guestsData?.Data?.map((guest) => {
-                    const options = parseGuestOptions(guest.Options);
-                    const generatedQR = getGeneratedQR(guest.ID);
+                    const options = parseGuestOptions(guest.Options || '{}');
+                    const generatedQR = getGeneratedQR(guest.ID!);
 
                     return (
                       <tr key={guest.ID}>

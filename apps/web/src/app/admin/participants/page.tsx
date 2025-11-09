@@ -11,13 +11,16 @@ import {
   parseGuestOptions,
   stringifyGuestOptions,
   type Guest,
-  type GuestOptions
+  type GuestCustomData,
 } from '@event-organizer/services';
 
 export default function ParticipantsPage() {
-  const [selectedEventId, setSelectedEventId] = useState('1'); // Default to first event
+  const [selectedEventId, setSelectedEventId] = useState(1); // Default to first event
   const { data: eventsData } = useEvents();
-  const { data, isLoading, error } = useGuests(selectedEventId, { sort: 'created_at', dir: 'desc' });
+  const { data, isLoading, error } = useGuests(selectedEventId, {
+    sort: 'created_at',
+    dir: 'desc',
+  });
   const createGuest = useCreateGuest();
   const updateGuest = useUpdateGuest();
   const deleteGuest = useDeleteGuest();
@@ -29,7 +32,7 @@ export default function ParticipantsPage() {
     Email: '',
     Phone: '',
     Address: '',
-    customData: '' // JSON string for custom options
+    customData: '', // JSON string for custom options
   });
 
   const resetForm = () => {
@@ -40,7 +43,7 @@ export default function ParticipantsPage() {
       Email: '',
       Phone: '',
       Address: '',
-      customData: ''
+      customData: '',
     });
   };
 
@@ -52,7 +55,7 @@ export default function ParticipantsPage() {
 
     try {
       // Parse custom data if provided
-      let options: GuestOptions = {};
+      let options: GuestCustomData = {};
       if (formData.customData.trim()) {
         try {
           options = JSON.parse(formData.customData);
@@ -63,15 +66,11 @@ export default function ParticipantsPage() {
       }
 
       await createGuest.mutateAsync({
-        eventId: selectedEventId,
-        data: {
-          Name: formData.Name,
-          Email: formData.Email || undefined,
-          Phone: formData.Phone || undefined,
-          Address: formData.Address || undefined,
-          EventId: selectedEventId,
-          Options: stringifyGuestOptions(options)
-        }
+        guestName: formData.Name,
+        email: formData.Email || undefined,
+        phoneNumber: formData.Phone || undefined,
+        customData: stringifyGuestOptions(options),
+        eventID: selectedEventId,
       });
 
       resetForm();
@@ -82,14 +81,14 @@ export default function ParticipantsPage() {
   };
 
   const handleEdit = (guest: Guest) => {
-    const options = parseGuestOptions(guest.Options);
+    const options = parseGuestOptions(guest.Options || '{}');
     setEditingGuest(guest);
     setFormData({
-      Name: guest.Name,
+      Name: guest.Name || '',
       Email: guest.Email || '',
       Phone: guest.Phone || '',
-      Address: guest.Address || '',
-      customData: JSON.stringify(options, null, 2)
+      Address: '',
+      customData: JSON.stringify(options, null, 2),
     });
   };
 
@@ -101,7 +100,7 @@ export default function ParticipantsPage() {
     }
 
     try {
-      let options: GuestOptions = {};
+      let options: GuestCustomData = {};
       if (formData.customData.trim()) {
         try {
           options = JSON.parse(formData.customData);
@@ -112,15 +111,13 @@ export default function ParticipantsPage() {
       }
 
       await updateGuest.mutateAsync({
-        eventId: selectedEventId,
-        guestId: editingGuest.ID.toString(),
+        guestId: editingGuest.ID!,
         data: {
-          Name: formData.Name,
-          Email: formData.Email || undefined,
-          Phone: formData.Phone || undefined,
-          Address: formData.Address || undefined,
-          Options: stringifyGuestOptions(options)
-        }
+          guestName: formData.Name,
+          email: formData.Email || undefined,
+          phoneNumber: formData.Phone || undefined,
+          customData: stringifyGuestOptions(options),
+        },
       });
 
       resetForm();
@@ -134,7 +131,7 @@ export default function ParticipantsPage() {
     if (!confirm('Are you sure you want to remove this guest from the event?')) return;
 
     try {
-      await deleteGuest.mutateAsync({ eventId: selectedEventId, guestId: guestId.toString() });
+      await deleteGuest.mutateAsync(guestId);
     } catch (err) {
       console.error('Delete error:', err);
       alert('Failed to delete guest. Please check console for details.');
@@ -175,12 +172,14 @@ export default function ParticipantsPage() {
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Manage Guests</h1>
-              <p className="mt-2 text-gray-600">Add and manage event guests (participants)</p>
+              <p className="mt-2 text-gray-600">
+                Add and manage event guests (participants)
+              </p>
             </div>
             <div className="flex gap-3">
               <select
                 value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                onChange={(e) => setSelectedEventId(Number(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 {eventsData?.Data?.map((event) => (
@@ -218,41 +217,57 @@ export default function ParticipantsPage() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Name *</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Name *
+                      </label>
                       <input
                         type="text"
                         value={formData.Name}
-                        onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Name: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Guest full name"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
                       <input
                         type="email"
                         value={formData.Email}
-                        onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Email: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="guest@example.com"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Phone</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Phone
+                      </label>
                       <input
                         type="tel"
                         value={formData.Phone}
-                        onChange={(e) => setFormData({ ...formData, Phone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Phone: e.target.value })
+                        }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="+1 234 567 8900"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Address</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Address
+                      </label>
                       <textarea
                         value={formData.Address}
-                        onChange={(e) => setFormData({ ...formData, Address: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Address: e.target.value })
+                        }
                         rows={2}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Full address"
@@ -264,21 +279,25 @@ export default function ParticipantsPage() {
                       </label>
                       <textarea
                         value={formData.customData}
-                        onChange={(e) => setFormData({ ...formData, customData: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customData: e.target.value })
+                        }
                         rows={4}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
                         placeholder='{"company": "Tech Corp", "jobTitle": "Developer"}'
                       />
                       <small className="text-gray-500 text-xs">
-                        Optional: Add custom fields like hotel, room, dietary restrictions, etc.
+                        Optional: Add custom fields like hotel, room, dietary
+                        restrictions, etc.
                       </small>
                     </div>
                     <div className="flex space-x-3 pt-4">
                       <button
                         onClick={editingGuest ? handleUpdate : handleCreate}
                         disabled={
-                          (editingGuest ? updateGuest.isPending : createGuest.isPending) ||
-                          !formData.Name.trim()
+                          (editingGuest
+                            ? updateGuest.isPending
+                            : createGuest.isPending) || !formData.Name.trim()
                         }
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -354,11 +373,14 @@ export default function ParticipantsPage() {
                         {guest.Phone || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                        {guest.Address || '-'}
+                        -
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        <div className="max-w-xs truncate" title={renderOptions(guest.Options)}>
-                          {renderOptions(guest.Options)}
+                        <div
+                          className="max-w-xs truncate"
+                          title={renderOptions(guest.Options || '{}')}
+                        >
+                          {renderOptions(guest.Options || '{}')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -370,7 +392,7 @@ export default function ParticipantsPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(guest.ID)}
+                          onClick={() => handleDelete(guest.ID!)}
                           disabled={deleteGuest.isPending}
                           className="text-red-600 hover:text-red-900 disabled:opacity-50"
                         >
@@ -390,9 +412,9 @@ export default function ParticipantsPage() {
           </div>
 
           {/* Pagination Info */}
-          {data?.Pagination && data.Pagination.TotalData > 0 && (
+          {data?.Pagination && (data.Pagination.TotalData ?? 0) > 0 && (
             <div className="mt-4 text-sm text-gray-500 text-center">
-              Showing {data.Data.length} of {data.Pagination.TotalData} guests (Page{' '}
+              Showing {data.Data?.length ?? 0} of {data.Pagination.TotalData} guests (Page{' '}
               {data.Pagination.Page} of {data.Pagination.TotalPage})
             </div>
           )}

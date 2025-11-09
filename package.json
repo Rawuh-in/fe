@@ -22,5 +22,8 @@
     "lint-staged": "^15.2.10",
     "prettier": "^3.4.1",
     "wrangler": "^4.45.0"
+  },
+  "dependencies": {
+    "eslint": "^9.39.1"
   }
 }

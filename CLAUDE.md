@@ -9,22 +9,44 @@ Event Organizer is a unified web front-end for event organizers covering attende
 ## Commands
 
 ### Development
+
+**Note**: The root `package.json` scripts use `bun`, but you can use npm/npx alternatives directly:
+
+#### Using npm (recommended if bun is not available):
 ```bash
-npm run dev              # Start Next.js dev server (proxies to apps/web)
-npm run build            # Production build
-npm run start            # Start production server
-npm run lint             # Run ESLint
-npm run typecheck        # Run TypeScript type checking
+# Development
+cd apps/web && npm run dev          # Start Next.js dev server
+cd apps/web && npm run build        # Production build
+cd apps/web && npm run start        # Start production server
+
+# Code Quality
+cd apps/web && npm run lint         # Run ESLint
+cd apps/web && npx tsc --noEmit     # Run TypeScript type checking
+npm run format                      # Format all code with Prettier (root command)
+```
+
+#### Using root scripts (requires bun):
+```bash
+npm run dev              # Start Next.js dev server (uses bun internally)
+npm run build            # Production build (uses bun internally)
+npm run start            # Start production server (uses bun internally)
+npm run lint             # Run ESLint (uses bun internally)
+npm run typecheck        # Run TypeScript type checking (uses bun internally)
 npm run format           # Format all code with Prettier
 ```
 
 ### Working with Workspaces
 This is an npm workspaces monorepo. To run commands in specific workspaces:
 ```bash
+# Using npm workspaces
 npm run <script> --workspace apps/web
 npm run <script> --workspace packages/ui
 npm run <script> --workspace packages/services
 npm run <script> --workspace packages/config
+
+# Or navigate directly (recommended if bun not available)
+cd apps/web && npm run <script>
+cd packages/ui && npm run <script>
 ```
 
 ### Pre-commit Hooks

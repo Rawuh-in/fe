@@ -74,7 +74,7 @@ export default function UsersPage() {
       Email: user.Email || '',
       Username: user.Username || '',
       Password: '', // Don't pre-fill password for security
-      UserType: user.UserType || 'PROJECT_USER',
+      UserType: (user.UserType as 'SYSTEM_ADMIN' | 'PROJECT_USER') || 'PROJECT_USER',
       EventId: user.ProjectID ? String(user.ProjectID) : '',
     });
   };
@@ -229,7 +229,11 @@ export default function UsersPage() {
                           setFormData({ ...formData, Password: e.target.value })
                         }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder={editingUser ? 'Leave empty to keep current password' : 'Password'}
+                        placeholder={
+                          editingUser
+                            ? 'Leave empty to keep current password'
+                            : 'Password'
+                        }
                         required={!editingUser}
                       />
                     </div>

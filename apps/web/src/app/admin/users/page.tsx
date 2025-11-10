@@ -2,13 +2,23 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useUsers, useCreateUser } from '@event-organizer/services';
+import { toast } from '@event-organizer/ui/components/toast';
+import {
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  type User,
+} from '@event-organizer/services';
 
 export default function UsersPage() {
   const { data, isLoading, error } = useUsers({ sort: 'created_at', dir: 'desc' });
   const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     Name: '',
     Email: '',
@@ -20,6 +30,7 @@ export default function UsersPage() {
 
   const resetForm = () => {
     setShowCreateForm(false);
+    setEditingUser(null);
     setFormData({
       Name: '',
       Email: '',
@@ -37,7 +48,7 @@ export default function UsersPage() {
       !formData.Username.trim() ||
       !formData.Password.trim()
     ) {
-      alert('Name, Email, Username, and Password are required');
+      toast.error('Name, Email, Username, and Password are required');
       return;
     }
 
@@ -48,10 +59,60 @@ export default function UsersPage() {
         role: formData.UserType,
       });
 
+      toast.success(`User "${formData.Username}" created successfully`);
       resetForm();
     } catch (err) {
       console.error('Create error:', err);
-      alert('Failed to create user. Please check console for details.');
+      toast.error('Failed to create user. Please try again.');
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setFormData({
+      Name: user.Name || '',
+      Email: user.Email || '',
+      Username: user.Username || '',
+      Password: '', // Don't pre-fill password for security
+      UserType: (user.UserType as 'SYSTEM_ADMIN' | 'PROJECT_USER') || 'PROJECT_USER',
+      EventId: user.ProjectID ? String(user.ProjectID) : '',
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editingUser) return;
+    if (!formData.Username.trim()) {
+      toast.error('Username is required');
+      return;
+    }
+
+    try {
+      await updateUser.mutateAsync({
+        userId: editingUser.ID!,
+        data: {
+          username: formData.Username,
+          password: formData.Password || undefined, // Only update if provided
+          role: formData.UserType,
+        },
+      });
+
+      toast.success(`User "${formData.Username}" updated successfully`);
+      resetForm();
+    } catch (err) {
+      console.error('Update error:', err);
+      toast.error('Failed to update user. Please try again.');
+    }
+  };
+
+  const handleDelete = async (userId: number) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      await deleteUser.mutateAsync(userId);
+      toast.success('User deleted successfully');
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Failed to delete user. Please try again.');
     }
   };
 
@@ -104,12 +165,12 @@ export default function UsersPage() {
           )}
 
           {/* Form Modal */}
-          {showCreateForm && (
+          {(showCreateForm || editingUser) && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
               <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
                 <div className="mt-3">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    Create New User
+                    {editingUser ? 'Edit User' : 'Create New User'}
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -159,7 +220,7 @@ export default function UsersPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Password *
+                        Password {editingUser ? '(leave empty to keep current)' : '*'}
                       </label>
                       <input
                         type="password"
@@ -168,8 +229,12 @@ export default function UsersPage() {
                           setFormData({ ...formData, Password: e.target.value })
                         }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Password"
-                        required
+                        placeholder={
+                          editingUser
+                            ? 'Leave empty to keep current password'
+                            : 'Password'
+                        }
+                        required={!editingUser}
                       />
                     </div>
                     <div>
@@ -206,15 +271,23 @@ export default function UsersPage() {
                     </div>
                     <div className="flex space-x-3 pt-4">
                       <button
-                        onClick={handleCreate}
-                        disabled={createUser.isPending}
+                        onClick={editingUser ? handleUpdate : handleCreate}
+                        disabled={
+                          editingUser ? updateUser.isPending : createUser.isPending
+                        }
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {createUser.isPending ? 'Creating...' : 'Create User'}
+                        {editingUser
+                          ? updateUser.isPending
+                            ? 'Updating...'
+                            : 'Update User'
+                          : createUser.isPending
+                            ? 'Creating...'
+                            : 'Create User'}
                       </button>
                       <button
                         onClick={resetForm}
-                        disabled={createUser.isPending}
+                        disabled={createUser.isPending || updateUser.isPending}
                         className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
                       >
                         Cancel
@@ -258,6 +331,9 @@ export default function UsersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -293,6 +369,22 @@ export default function UsersPage() {
                         {user.CreatedAt
                           ? new Date(user.CreatedAt).toLocaleDateString()
                           : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(user)}
+                          disabled={deleteUser.isPending}
+                          className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:opacity-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.ID!)}
+                          disabled={deleteUser.isPending}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        >
+                          {deleteUser.isPending ? 'Deleting...' : 'Delete'}
+                        </button>
                       </td>
                     </tr>
                   ))}

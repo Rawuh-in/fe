@@ -13,7 +13,8 @@
     "./tokens": "./src/tokens.ts",
     "./tokens.css": "./src/tokens.css",
     "./components/button": "./src/components/button.tsx",
-    "./components/badge": "./src/components/badge.tsx"
+    "./components/badge": "./src/components/badge.tsx",
+    "./components/toast": "./src/components/toast.tsx"
   },
   "sideEffects": [
     "./src/tokens.css"
@@ -23,7 +24,8 @@
     "react-dom": "^18 || ^19"
   },
   "dependencies": {
-    "clsx": "^2.1.1"
+    "clsx": "^2.1.1",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@types/react": "^19",

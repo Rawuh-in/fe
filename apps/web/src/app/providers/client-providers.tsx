@@ -2,6 +2,7 @@
 
 import { Fragment, type ReactNode } from "react";
 import type { JSX } from "react";
+import { Toaster } from "@event-organizer/ui/components/toast";
 import { PwaInstallPrompt } from "./pwa-install-prompt";
 import { QueryProvider } from "./query-provider";
 import { ServiceWorkerProvider } from "./service-worker-provider";
@@ -17,6 +18,7 @@ export function ClientProviders({ children }: ClientProvidersProps): JSX.Element
       <Fragment>
         <ServiceWorkerProvider />
         <PwaInstallPrompt />
+        <Toaster />
       </Fragment>
     </QueryProvider>
   );

@@ -200,8 +200,12 @@ export interface ListQueryParams {
 // ============================================================================
 
 const getBaseUrl = (): string => {
-  // Next.js uses NEXT_PUBLIC_ prefix for client-side env vars
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+  // Check both Next.js (NEXT_PUBLIC_) and Vite (VITE_) prefixes
+  return (
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.VITE_API_BASE_URL ||
+    'http://localhost:8080'
+  );
 };
 
 const getAuthToken = (): string | null => {

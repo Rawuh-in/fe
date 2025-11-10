@@ -13,6 +13,7 @@ Event Organizer is a unified web front-end for event organizers covering attende
 **Note**: The root `package.json` scripts use `bun`, but you can use npm/npx alternatives directly:
 
 #### Using npm (recommended if bun is not available):
+
 ```bash
 # Development
 cd apps/web && npm run dev          # Start Next.js dev server
@@ -26,6 +27,7 @@ npm run format                      # Format all code with Prettier (root comman
 ```
 
 #### Using root scripts (requires bun):
+
 ```bash
 npm run dev              # Start Next.js dev server (uses bun internally)
 npm run build            # Production build (uses bun internally)
@@ -36,7 +38,9 @@ npm run format           # Format all code with Prettier
 ```
 
 ### Working with Workspaces
+
 This is an npm workspaces monorepo. To run commands in specific workspaces:
+
 ```bash
 # Using npm workspaces
 npm run <script> --workspace apps/web
@@ -49,27 +53,68 @@ cd apps/web && npm run <script>
 cd packages/ui && npm run <script>
 ```
 
+### Testing
+
+#### API Integration Tests
+
+The `packages/services` package includes comprehensive integration tests for all API endpoints:
+
+```bash
+# Run all API tests
+cd packages/services && npm test
+
+# Watch mode (re-run on changes)
+cd packages/services && npm run test:watch
+
+# Interactive UI
+cd packages/services && npm run test:ui
+
+# With coverage
+cd packages/services && npm run test:coverage
+```
+
+**Prerequisites:**
+
+- Backend server must be running
+- Configure credentials in `packages/services/.env`
+- See `packages/services/TEST_README.md` for detailed setup
+
+**Test Coverage:**
+
+- Authentication (login, token management)
+- Event CRUD operations
+- User CRUD operations
+- Guest CRUD operations
+- Check-in functionality
+
 ### Pre-commit Hooks
+
 The project uses Husky + lint-staged. On commit, code is automatically:
+
 - Linted with ESLint (with auto-fix)
 - Formatted with Prettier
 
 ## Architecture
 
 ### Monorepo Structure
+
 - `apps/web/` - Next.js application (App Router, TypeScript, React 19)
 - `packages/ui/` - Shared UI components and design tokens
 - `packages/services/` - API clients, storage adapters, utilities
 - `packages/config/` - Shared configuration constants
 
 ### Path Aliases
+
 TypeScript paths are configured in `tsconfig.base.json`:
+
 - `@event-organizer/ui/*` → `packages/ui/src/*`
 - `@event-organizer/config/*` → `packages/config/src/*`
 - `@event-organizer/services/*` → `packages/services/src/*`
 
 ### Design System & Tokens
+
 The UI system uses **CSS custom properties** for design tokens defined in `packages/ui/src/tokens.ts`. All color, spacing, shadows, radius, and typography values reference CSS variables prefixed with `--eo-*`:
+
 - Colors: `--eo-primary`, `--eo-success`, `--eo-danger`, `--eo-bg`, `--eo-fg`, etc.
 - Spacing: `--eo-space-1` through `--eo-space-7`
 - Typography: `--eo-text-xs` through `--eo-text-xxl`
@@ -79,6 +124,7 @@ The UI system uses **CSS custom properties** for design tokens defined in `packa
 **When styling components**: Always use design tokens via the exported constants or CSS variables, never hardcode colors/spacing.
 
 ### PWA Configuration
+
 - Manifest at `apps/web/public/manifest.webmanifest`
 - Service worker at `apps/web/public/sw.js`
 - PWA providers in `apps/web/src/app/providers/`:
@@ -87,6 +133,7 @@ The UI system uses **CSS custom properties** for design tokens defined in `packa
   - `client-providers.tsx` - Wraps all client-side providers
 
 ### Technology Stack
+
 - **Framework**: Next.js 15 with App Router, React 19
 - **Styling**: Tailwind CSS v4
 - **PWA**: Workbox (via workbox-window)
@@ -96,7 +143,9 @@ The UI system uses **CSS custom properties** for design tokens defined in `packa
 - **Testing**: Planned Vitest + Testing Library + Playwright
 
 ### Feature Module Organization
+
 The plan defines these feature modules (to be implemented):
+
 - `features/scanner` - Stage selection, camera workflows, offline queue, manual entry
 - `features/events` - Event list, stage assignments, hotel coordination, ticket management
 - `features/reports` - Attendance dashboards, export tooling, audit history
@@ -105,22 +154,27 @@ The plan defines these feature modules (to be implemented):
 ## Development Principles
 
 ### Mobile-First & Offline Resilience
+
 - Optimize scanner and quick actions for touch devices
 - Ensure field operations function without connectivity via cached shell, queuing, and background sync
 - Support desktop layouts for management features
 
 ### Accessibility
+
 - Follow WCAG AA+ contrast requirements
 - Use large tap targets for mobile
 - Bilingual-ready copy (id-ID primary, en-US secondary)
 
 ### Next.js Configuration
+
 The project uses:
+
 - `reactStrictMode: true`
 - `typedRoutes: true` for type-safe routing
 - `transpilePackages` for all workspace packages
 
 ## Deployment & Environments
+
 - **Dev**: Feature branches with mock/MSW (planned)
 - **Staging**: Full backend integration
 - **Production**: TBD
@@ -130,15 +184,19 @@ The project uses:
 ## Important Context from Planning Document
 
 ### Camera Compatibility
+
 Test on target devices early; include fallbacks (manual entry, external scanners) and guard for browser torch support.
 
 ### Offline Sync Strategy
+
 Design deterministic merging rules and backend reconciliation endpoints; surface conflict resolution in UI.
 
 ### Module Boundaries
+
 Enforce with lint rules and shared types; regularly review bundle size and lazy-load heavy features.
 
 ## Open Questions (from plan.md)
+
 - Backend API contract format (OpenAPI vs. GraphQL) - impacts code generation
 - Authentication mechanism (OAuth device login, magic links, hardware tokens)
 - Printing requirements (thermal printer models, network vs. Bluetooth)

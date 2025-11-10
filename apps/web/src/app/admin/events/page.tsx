@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from '@event-organizer/ui/components/toast';
 import {
   useEvents,
   useCreateEvent,
@@ -36,7 +37,7 @@ export default function EventsPage() {
 
   const handleCreate = async () => {
     if (!formData.EventName.trim()) {
-      alert('Event name is required');
+      toast.error('Event name is required');
       return;
     }
 
@@ -60,10 +61,11 @@ export default function EventsPage() {
         options: stringifyEventOptions(options),
       });
 
+      toast.success(`Event "${formData.EventName}" created successfully`);
       resetForm();
     } catch (err) {
       console.error('Create error:', err);
-      alert('Failed to create event. Please check console for details.');
+      toast.error('Failed to create event. Please try again.');
     }
   };
 
@@ -81,7 +83,7 @@ export default function EventsPage() {
   const handleUpdate = async () => {
     if (!editingEvent) return;
     if (!formData.EventName.trim()) {
-      alert('Event name is required');
+      toast.error('Event name is required');
       return;
     }
 
@@ -108,10 +110,11 @@ export default function EventsPage() {
         },
       });
 
+      toast.success(`Event "${formData.EventName}" updated successfully`);
       resetForm();
     } catch (err) {
       console.error('Update error:', err);
-      alert('Failed to update event. Please check console for details.');
+      toast.error('Failed to update event. Please try again.');
     }
   };
 
@@ -120,9 +123,10 @@ export default function EventsPage() {
 
     try {
       await deleteEvent.mutateAsync(eventId);
+      toast.success('Event deleted successfully');
     } catch (err) {
       console.error('Delete error:', err);
-      alert('Failed to delete event. Please check console for details.');
+      toast.error('Failed to delete event. Please try again.');
     }
   };
 

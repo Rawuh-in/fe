@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from '@event-organizer/ui/components/toast';
 import {
   useGuests,
   useEvents,
@@ -49,7 +50,7 @@ export default function ParticipantsPage() {
 
   const handleCreate = async () => {
     if (!formData.Name.trim()) {
-      alert('Guest name is required');
+      toast.error('Guest name is required');
       return;
     }
 
@@ -60,7 +61,7 @@ export default function ParticipantsPage() {
         try {
           options = JSON.parse(formData.customData);
         } catch {
-          alert('Invalid JSON format for custom data');
+          toast.error('Invalid JSON format for custom data');
           return;
         }
       }
@@ -76,10 +77,11 @@ export default function ParticipantsPage() {
         },
       });
 
+      toast.success(`Guest "${formData.Name}" added successfully`);
       resetForm();
     } catch (err) {
       console.error('Create error:', err);
-      alert('Failed to create guest. Please check console for details.');
+      toast.error('Failed to create guest. Please try again.');
     }
   };
 
@@ -98,7 +100,7 @@ export default function ParticipantsPage() {
   const handleUpdate = async () => {
     if (!editingGuest) return;
     if (!formData.Name.trim()) {
-      alert('Guest name is required');
+      toast.error('Guest name is required');
       return;
     }
 
@@ -108,7 +110,7 @@ export default function ParticipantsPage() {
         try {
           options = JSON.parse(formData.customData);
         } catch {
-          alert('Invalid JSON format for custom data');
+          toast.error('Invalid JSON format for custom data');
           return;
         }
       }
@@ -124,10 +126,11 @@ export default function ParticipantsPage() {
         },
       });
 
+      toast.success(`Guest "${formData.Name}" updated successfully`);
       resetForm();
     } catch (err) {
       console.error('Update error:', err);
-      alert('Failed to update guest. Please check console for details.');
+      toast.error('Failed to update guest. Please try again.');
     }
   };
 
@@ -136,9 +139,10 @@ export default function ParticipantsPage() {
 
     try {
       await deleteGuest.mutateAsync({ eventId: selectedEventId, guestId });
+      toast.success('Guest removed successfully');
     } catch (err) {
       console.error('Delete error:', err);
-      alert('Failed to delete guest. Please check console for details.');
+      toast.error('Failed to delete guest. Please try again.');
     }
   };
 

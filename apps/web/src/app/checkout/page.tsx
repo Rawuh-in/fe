@@ -117,7 +117,9 @@ export default function CheckOutPage() {
       return options.CheckedOutAt;
     }) || [];
 
-  const getGuestStatus = (guest: Guest): 'checked_out' | 'checked_in' | 'not_checked_in' => {
+  const getGuestStatus = (
+    guest: Guest
+  ): 'checked_out' | 'checked_in' | 'not_checked_in' => {
     const options = parseGuestOptions(guest.Options || '{}');
     if (options.CheckedOutAt) return 'checked_out';
     if (options.CheckedInAt) return 'checked_in';
@@ -140,7 +142,8 @@ export default function CheckOutPage() {
   const totalGuests = guestsData?.Data?.length || 0;
   const checkedOutCount = checkedOutGuests.length;
   const checkedInCount = checkedInGuests.length;
-  const checkedOutPercentage = totalGuests > 0 ? (checkedOutCount / totalGuests) * 100 : 0;
+  const checkedOutPercentage =
+    totalGuests > 0 ? (checkedOutCount / totalGuests) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -176,7 +179,9 @@ export default function CheckOutPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full mb-4">
               <span className="text-4xl">🚪</span>
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">QR Check-out Station</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              QR Check-out Station
+            </h1>
             <p className="text-lg text-gray-600">
               Scan QR codes or enter guest ID to check out guests
             </p>
@@ -245,7 +250,9 @@ export default function CheckOutPage() {
           {/* Check-out Progress */}
           <div className="mb-8 bg-white p-6 rounded-lg shadow-md border-2 border-orange-200">
             <div className="flex justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Check-out Progress</span>
+              <span className="text-sm font-medium text-gray-700">
+                Check-out Progress
+              </span>
               <span className="text-sm font-medium text-orange-600">
                 {checkedOutPercentage.toFixed(1)}%
               </span>
@@ -277,14 +284,15 @@ export default function CheckOutPage() {
                 <div className="mt-2 text-sm">
                   <p>Guest ID: #{lastScanned.ID}</p>
                   <p>Email: {lastScanned.Email || 'N/A'}</p>
-                  {parseGuestOptions(lastScanned.Options || '{}').CheckedOutAt && (
+                  {parseGuestOptions(lastScanned.Options || '{}').CheckedOutAt ? (
                     <p>
                       Checked out at:{' '}
                       {new Date(
-                        parseGuestOptions(lastScanned.Options || '{}').CheckedOutAt as string
+                        parseGuestOptions(lastScanned.Options || '{}')
+                          .CheckedOutAt as string
                       ).toLocaleString()}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
@@ -468,22 +476,24 @@ export default function CheckOutPage() {
             </h4>
             <ul className="text-sm text-orange-800 space-y-1">
               <li>
-                • Guests must be checked in before they can be checked out (status will show ✅
-                Checked In)
+                • Guests must be checked in before they can be checked out (status will
+                show ✅ Checked In)
               </li>
               <li>
-                • Use the QR scanner to quickly check out guests by uploading their QR code
+                • Use the QR scanner to quickly check out guests by uploading their QR
+                code
               </li>
               <li>
-                • Alternatively, manually enter the guest ID and click &quot;Check Out&quot;
+                • Alternatively, manually enter the guest ID and click &quot;Check
+                Out&quot;
               </li>
               <li>
                 • The check-out timestamp is automatically recorded in the guest&apos;s
                 CheckedOutAt field
               </li>
               <li>
-                • Once checked out, guests cannot be checked out again (status will show 🚪
-                Checked Out)
+                • Once checked out, guests cannot be checked out again (status will show
+                🚪 Checked Out)
               </li>
             </ul>
           </div>

@@ -223,16 +223,10 @@ export default function Dashboard() {
                         </div>
                         <div className="flex space-x-3">
                           <Link
-                            href={`/admin/participants`}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
-                          >
-                            Manage Guests
-                          </Link>
-                          <Link
-                            href={`/qr`}
+                            href={`/admin/guests`}
                             className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors"
                           >
-                            QR Codes
+                            Guest Management
                           </Link>
                         </div>
                       </div>
@@ -284,62 +278,49 @@ export default function Dashboard() {
             </Link>
 
             <Link
-              href="/admin/participants"
+              href="/admin/guests"
               className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600">
-                    Manage Guests
+                    Guest Management
                   </h3>
-                  <p className="mt-1 text-gray-600">Add event guests with custom data</p>
+                  <p className="mt-1 text-gray-600">
+                    Manage guests, assignments, and QR codes
+                  </p>
                 </div>
                 <span className="text-3xl">🎫</span>
               </div>
             </Link>
 
             <Link
-              href="/admin/assignments"
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600">
-                    View Assignments
-                  </h3>
-                  <p className="mt-1 text-gray-600">Guest hotel and room assignments</p>
-                </div>
-                <span className="text-3xl">🏨</span>
-              </div>
-            </Link>
-
-            <Link
-              href="/qr"
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
-                    QR Code Management
-                  </h3>
-                  <p className="mt-1 text-gray-600">Generate and download QR codes</p>
-                </div>
-                <span className="text-3xl">📱</span>
-              </div>
-            </Link>
-
-            <Link
               href="/checkin"
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
+              className="bg-white p-6 rounded-lg shadow-sm border-2 border-teal-200 hover:shadow-md transition-shadow group"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600">
-                    Check-in Station
+                    QR Check-in Station
                   </h3>
                   <p className="mt-1 text-gray-600">Scan QR codes for guest check-in</p>
                 </div>
                 <span className="text-3xl">✅</span>
+              </div>
+            </Link>
+
+            <Link
+              href="/checkout"
+              className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-lg shadow-sm border-2 border-orange-300 hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600">
+                    QR Check-out Station
+                  </h3>
+                  <p className="mt-1 text-gray-600">Scan QR codes for guest check-out</p>
+                </div>
+                <span className="text-3xl">🚪</span>
               </div>
             </Link>
           </div>

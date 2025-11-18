@@ -162,38 +162,19 @@ export default function GuestManagementPage() {
     }
   };
 
-  const renderOptions = (optionsJson: string) => {
-    const options = parseGuestOptions(optionsJson);
-    if (!options || Object.keys(options).length === 0) return '-';
-    return Object.entries(options)
-      .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-      .join(', ');
+  // Assignment and status functions
+  const getGuestAssignment = (guest: Guest) => {
+    const options = parseGuestOptions(guest.Options || '{}');
+    return {
+      hotel: options.Hotel as string | undefined,
+      room: options.Room as string | undefined,
+      checkInDate: options.CheckInDate as string | undefined,
+      checkedInAt: options.CheckedInAt as string | undefined,
+    };
   };
 
-  // Assignment functions
-  const assignmentsWithGuests =
-    data?.Data?.map((guest) => {
-      const options = parseGuestOptions(guest.Options || '{}');
-      return {
-        guest,
-        hotel: options.Hotel as string | undefined,
-        room: options.Room as string | undefined,
-        checkInDate: options.CheckInDate as string | undefined,
-        checkOutDate: options.CheckOutDate as string | undefined,
-        checkedInAt: options.CheckedInAt as string | undefined,
-      };
-    }) || [];
-
-  const filteredAssignments = assignmentsWithGuests.filter((assignment) => {
-    if (filterStatus === 'assigned') {
-      return assignment.hotel || assignment.room;
-    } else if (filterStatus === 'unassigned') {
-      return !assignment.hotel && !assignment.room;
-    }
-    return true;
-  });
-
-  const getCheckInStatus = (assignment: (typeof assignmentsWithGuests)[0]) => {
+  const getCheckInStatus = (guest: Guest) => {
+    const assignment = getGuestAssignment(guest);
     if (assignment.checkedInAt) return 'checked_in';
     if (assignment.hotel || assignment.room) return 'assigned';
     return 'unassigned';
@@ -212,10 +193,27 @@ export default function GuestManagementPage() {
     }
   };
 
+  // Filter guests based on assignment status
+  const filteredGuests =
+    data?.Data?.filter((guest) => {
+      const assignment = getGuestAssignment(guest);
+      if (filterStatus === 'assigned') {
+        return assignment.hotel || assignment.room;
+      } else if (filterStatus === 'unassigned') {
+        return !assignment.hotel && !assignment.room;
+      }
+      return true;
+    }) || [];
+
   const stats = {
-    total: assignmentsWithGuests.length,
-    assigned: assignmentsWithGuests.filter((a) => a.hotel || a.room).length,
-    checkedIn: assignmentsWithGuests.filter((a) => a.checkedInAt).length,
+    total: data?.Data?.length || 0,
+    assigned:
+      data?.Data?.filter((g) => {
+        const a = getGuestAssignment(g);
+        return a.hotel || a.room;
+      }).length || 0,
+    checkedIn: data?.Data?.filter((g) => getGuestAssignment(g).checkedInAt).length || 0,
+    qrGenerated: generatedQRs.length,
   };
 
   // QR Code functions
@@ -230,14 +228,14 @@ export default function GuestManagementPage() {
       },
     });
 
-    const options = parseGuestOptions(guest.Options || '{}');
+    const assignment = getGuestAssignment(guest);
 
     return {
       guestId: guest.ID!,
       guestName: guest.Name!,
       guestEmail: guest.Email || '',
-      hotel: options.Hotel as string | undefined,
-      room: options.Room as string | undefined,
+      hotel: assignment.hotel,
+      room: assignment.room,
       qrImageUrl,
       generatedAt: new Date().toISOString(),
     };
@@ -251,6 +249,7 @@ export default function GuestManagementPage() {
         const filtered = prev.filter((q) => q.guestId !== qr.guestId);
         return [...filtered, qr];
       });
+      toast.success(`QR code generated for ${guest.Name}`);
     } catch (err) {
       console.error('QR generation error:', err);
       toast.error('Failed to generate QR code');
@@ -260,14 +259,14 @@ export default function GuestManagementPage() {
   };
 
   const handleGenerateAll = async () => {
-    if (!data?.Data || data.Data.length === 0) {
-      toast.error('No guests found for this event');
+    if (!filteredGuests || filteredGuests.length === 0) {
+      toast.error('No guests found');
       return;
     }
 
     if (
       !confirm(
-        `Generate QR codes for all ${data.Data.length} guests? This may take a moment.`
+        `Generate QR codes for all ${filteredGuests.length} guests? This may take a moment.`
       )
     ) {
       return;
@@ -275,7 +274,9 @@ export default function GuestManagementPage() {
 
     setIsGenerating(true);
     try {
-      const qrs = await Promise.all(data.Data.map((guest) => generateQRForGuest(guest)));
+      const qrs = await Promise.all(
+        filteredGuests.map((guest) => generateQRForGuest(guest))
+      );
       setGeneratedQRs(qrs);
       toast.success(`Generated ${qrs.length} QR codes successfully`);
     } catch (err) {
@@ -304,12 +305,6 @@ export default function GuestManagementPage() {
         downloadQR(qr);
       }, index * 200);
     });
-  };
-
-  const clearAll = () => {
-    if (confirm('Clear all generated QR codes?')) {
-      setGeneratedQRs([]);
-    }
   };
 
   const getGeneratedQR = (guestId: number) => {
@@ -373,16 +368,89 @@ export default function GuestManagementPage() {
             </div>
           )}
 
-          {/* Section 1: Manage Guests */}
-          <div className="mb-12">
-            <div className="mb-6 flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <span className="text-2xl mr-2">🎫</span>
-                  Manage Guests
-                </h2>
-                <p className="mt-1 text-gray-600">Add and manage event guests</p>
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <span className="text-2xl">👥</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-sm font-medium text-gray-500">Total Guests</h3>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
               </div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <span className="text-2xl">🏨</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-sm font-medium text-gray-500">Assigned</h3>
+                  <p className="text-2xl font-bold text-purple-600">{stats.assigned}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <span className="text-2xl">✅</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-sm font-medium text-gray-500">Checked In</h3>
+                  <p className="text-2xl font-bold text-green-600">{stats.checkedIn}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <span className="text-2xl">📱</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-sm font-medium text-gray-500">QR Generated</h3>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {stats.qrGenerated}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="mb-6 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <label className="text-sm font-medium text-gray-700">Filter:</label>
+              <select
+                value={filterStatus}
+                onChange={(e) =>
+                  setFilterStatus(e.target.value as 'all' | 'assigned' | 'unassigned')
+                }
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="all">All Guests</option>
+                <option value="assigned">Assigned Only</option>
+                <option value="unassigned">Unassigned Only</option>
+              </select>
+            </div>
+            <div className="flex space-x-3">
+              {generatedQRs.length > 0 && (
+                <button
+                  onClick={downloadAllQRs}
+                  disabled={isGenerating}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  Download All QR Codes
+                </button>
+              )}
+              <button
+                onClick={handleGenerateAll}
+                disabled={isLoading || isGenerating || filteredGuests.length === 0}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? 'Generating...' : 'Generate All QR Codes'}
+              </button>
               <button
                 onClick={() => setShowCreateForm(true)}
                 disabled={isLoading}
@@ -391,131 +459,118 @@ export default function GuestManagementPage() {
                 Add Guest
               </button>
             </div>
+          </div>
 
-            {/* Form Modal */}
-            {(showCreateForm || editingGuest) && (
-              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-                  <div className="mt-3">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      {editingGuest ? 'Edit Guest' : 'Add New Guest'}
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Name *
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.Name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, Name: e.target.value })
-                          }
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Guest full name"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          value={formData.Email}
-                          onChange={(e) =>
-                            setFormData({ ...formData, Email: e.target.value })
-                          }
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="guest@example.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Phone
-                        </label>
-                        <input
-                          type="tel"
-                          value={formData.Phone}
-                          onChange={(e) =>
-                            setFormData({ ...formData, Phone: e.target.value })
-                          }
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="+1 234 567 8900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Address
-                        </label>
-                        <textarea
-                          value={formData.Address}
-                          onChange={(e) =>
-                            setFormData({ ...formData, Address: e.target.value })
-                          }
-                          rows={2}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Full address"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Custom Data (JSON)
-                        </label>
-                        <textarea
-                          value={formData.customData}
-                          onChange={(e) =>
-                            setFormData({ ...formData, customData: e.target.value })
-                          }
-                          rows={4}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
-                          placeholder='{"Hotel": "Hotel A", "Room": "101", "CheckInDate": "2025-01-15"}'
-                        />
-                        <small className="text-gray-500 text-xs">
-                          Optional: Add custom fields like hotel, room, dietary
-                          restrictions, etc.
-                        </small>
-                      </div>
-                      <div className="flex space-x-3 pt-4">
-                        <button
-                          onClick={editingGuest ? handleUpdate : handleCreate}
-                          disabled={
-                            (editingGuest
-                              ? updateGuest.isPending
-                              : createGuest.isPending) || !formData.Name.trim()
-                          }
-                          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {editingGuest
+          {/* Form Modal */}
+          {(showCreateForm || editingGuest) && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+                <div className="mt-3">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    {editingGuest ? 'Edit Guest' : 'Add New Guest'}
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.Name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Name: e.target.value })
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Guest full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.Email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Email: e.target.value })
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="guest@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.Phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, Phone: e.target.value })
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="+1 234 567 8900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Custom Data (JSON)
+                      </label>
+                      <textarea
+                        value={formData.customData}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customData: e.target.value })
+                        }
+                        rows={4}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
+                        placeholder='{"Hotel": "Hotel A", "Room": "101", "CheckInDate": "2025-01-15"}'
+                      />
+                      <small className="text-gray-500 text-xs">
+                        Add hotel, room, check-in dates, and other custom fields
+                      </small>
+                    </div>
+                    <div className="flex space-x-3 pt-4">
+                      <button
+                        onClick={editingGuest ? handleUpdate : handleCreate}
+                        disabled={
+                          (editingGuest
                             ? updateGuest.isPending
-                              ? 'Updating...'
-                              : 'Update Guest'
-                            : createGuest.isPending
-                              ? 'Adding...'
-                              : 'Add Guest'}
-                        </button>
-                        <button
-                          onClick={resetForm}
-                          disabled={createGuest.isPending || updateGuest.isPending}
-                          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                            : createGuest.isPending) || !formData.Name.trim()
+                        }
+                        className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {editingGuest
+                          ? updateGuest.isPending
+                            ? 'Updating...'
+                            : 'Update Guest'
+                          : createGuest.isPending
+                            ? 'Adding...'
+                            : 'Add Guest'}
+                      </button>
+                      <button
+                        onClick={resetForm}
+                        disabled={createGuest.isPending || updateGuest.isPending}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Guests Table */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              {isLoading ? (
-                <div className="text-center py-12">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                  <p className="mt-2 text-gray-500">Loading guests...</p>
-                </div>
-              ) : (
+          {/* Unified Guest Table */}
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2 text-gray-500">Loading guests...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -532,342 +587,6 @@ export default function GuestManagementPage() {
                         Phone
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Custom Data
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {data?.Data?.map((guest) => (
-                      <tr key={guest.ID}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          #{guest.ID}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {guest.Name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {guest.Email || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {guest.Phone || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          <div
-                            className="max-w-xs truncate"
-                            title={renderOptions(guest.Options || '{}')}
-                          >
-                            {renderOptions(guest.Options || '{}')}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleEdit(guest)}
-                            disabled={deleteGuest.isPending}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:opacity-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(guest.ID!)}
-                            disabled={deleteGuest.isPending}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                          >
-                            {deleteGuest.isPending ? 'Removing...' : 'Remove'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-              {!isLoading && (!data?.Data || data.Data.length === 0) && (
-                <div className="text-center py-8 text-gray-500">
-                  No guests found for this event. Add your first guest above.
-                </div>
-              )}
-            </div>
-
-            {/* Pagination Info */}
-            {data?.Pagination && (data.Pagination.TotalData ?? 0) > 0 && (
-              <div className="mt-4 text-sm text-gray-500 text-center">
-                Showing {data.Data?.length ?? 0} of {data.Pagination.TotalData} guests
-                (Page {data.Pagination.Page} of {data.Pagination.TotalPage})
-              </div>
-            )}
-          </div>
-
-          {/* Section 2: View Assignments */}
-          <div className="mb-12">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <span className="text-2xl mr-2">🏨</span>
-                Guest Assignments
-              </h2>
-              <p className="mt-1 text-gray-600">
-                View hotel and room assignments for event guests
-              </p>
-            </div>
-
-            {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <span className="text-2xl">📋</span>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-sm font-medium text-gray-500">Total Guests</h3>
-                    <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <span className="text-2xl">🏨</span>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-sm font-medium text-gray-500">Assigned</h3>
-                    <p className="text-2xl font-bold text-purple-600">{stats.assigned}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <span className="text-2xl">✅</span>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-sm font-medium text-gray-500">Checked In</h3>
-                    <p className="text-2xl font-bold text-green-600">{stats.checkedIn}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Filter */}
-            <div className="mb-6 flex items-center justify-end">
-              <div className="flex items-center space-x-4">
-                <label className="text-sm font-medium text-gray-700">Filter:</label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) =>
-                    setFilterStatus(e.target.value as 'all' | 'assigned' | 'unassigned')
-                  }
-                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="all">All Guests</option>
-                  <option value="assigned">Assigned Only</option>
-                  <option value="unassigned">Unassigned Only</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Assignments Table */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              {isLoading ? (
-                <div className="text-center py-12">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                  <p className="mt-2 text-gray-500">Loading assignments...</p>
-                </div>
-              ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Guest Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Hotel
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Room
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Check-in Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredAssignments.map((assignment) => {
-                      const status = getCheckInStatus(assignment);
-                      return (
-                        <tr key={assignment.guest.ID}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            #{assignment.guest.ID}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {assignment.guest.Name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {assignment.guest.Email || '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {assignment.hotel || '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {assignment.room || '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {assignment.checkInDate
-                              ? new Date(assignment.checkInDate).toLocaleDateString()
-                              : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
-                                status
-                              )}`}
-                            >
-                              {status === 'checked_in'
-                                ? 'Checked In'
-                                : status === 'assigned'
-                                  ? 'Assigned'
-                                  : 'Unassigned'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-              {!isLoading && filteredAssignments.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  {filterStatus === 'assigned'
-                    ? 'No assigned guests found.'
-                    : filterStatus === 'unassigned'
-                      ? 'No unassigned guests found.'
-                      : 'No guests found for this event.'}
-                </div>
-              )}
-            </div>
-
-            {/* Help Text */}
-            <div className="mt-6 bg-purple-50 border border-purple-200 rounded-md p-4">
-              <h4 className="text-sm font-semibold text-purple-900 mb-2">
-                💡 How to Manage Assignments
-              </h4>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>
-                  • Assignments are stored in Guest Options as JSON data (Hotel, Room,
-                  CheckInDate, etc.)
-                </li>
-                <li>
-                  • To assign a guest: Edit their custom data in the Manage Guests section
-                  above
-                </li>
-                <li>
-                  • Example Options JSON:{' '}
-                  <code className="bg-purple-100 px-1 rounded">
-                    {`{"Hotel": "Hotel A", "Room": "101", "CheckInDate": "2025-01-15"}`}
-                  </code>
-                </li>
-                <li>
-                  • Check-in status is automatically tracked via the CheckedInAt field
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Section 3: QR Codes */}
-          <div className="mb-12">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <span className="text-2xl mr-2">📱</span>
-                QR Code Management
-              </h2>
-              <p className="mt-1 text-gray-600">
-                Generate QR codes for guest check-in. Each QR code contains the guest ID.
-              </p>
-            </div>
-
-            {/* Statistics and Controls */}
-            <div className="mb-6 bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
-                  <div className="text-sm">
-                    <p className="text-gray-500">Total Guests</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {data?.Data?.length || 0}
-                    </p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="text-gray-500">QR Codes Generated</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {generatedQRs.length}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex space-x-3">
-                  {generatedQRs.length > 0 && (
-                    <>
-                      <button
-                        onClick={downloadAllQRs}
-                        disabled={isGenerating}
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
-                      >
-                        Download All
-                      </button>
-                      <button
-                        onClick={clearAll}
-                        disabled={isGenerating}
-                        className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50"
-                      >
-                        Clear All
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={handleGenerateAll}
-                    disabled={isLoading || isGenerating || !data?.Data?.length}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isGenerating ? 'Generating...' : 'Generate All QR Codes'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Guest List with QR Generation */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-md mb-8">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Guest List</h3>
-                <p className="text-sm text-gray-500">
-                  Click &quot;Generate QR&quot; to create a QR code for individual guests
-                </p>
-              </div>
-              {isLoading ? (
-                <div className="text-center py-12">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                  <p className="mt-2 text-gray-500">Loading guests...</p>
-                </div>
-              ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Guest Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Hotel
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -876,14 +595,18 @@ export default function GuestManagementPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        QR Code
+                      </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {data?.Data?.map((guest) => {
-                      const options = parseGuestOptions(guest.Options || '{}');
+                    {filteredGuests.map((guest) => {
+                      const assignment = getGuestAssignment(guest);
+                      const status = getCheckInStatus(guest);
                       const generatedQR = getGeneratedQR(guest.ID!);
 
                       return (
@@ -898,131 +621,187 @@ export default function GuestManagementPage() {
                             {guest.Email || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {(options.Hotel as string) || '-'}
+                            {guest.Phone || '-'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {(options.Room as string) || '-'}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {assignment.hotel || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {assignment.room || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                                status
+                              )}`}
+                            >
+                              {status === 'checked_in'
+                                ? 'Checked In'
+                                : status === 'assigned'
+                                  ? 'Assigned'
+                                  : 'Unassigned'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
                             {generatedQR ? (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                QR Generated
-                              </span>
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                  Generated
+                                </span>
+                                <button
+                                  onClick={() => downloadQR(generatedQR)}
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Download QR"
+                                >
+                                  ⬇️
+                                </button>
+                              </div>
                             ) : (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                No QR
-                              </span>
+                              <button
+                                onClick={() => handleGenerateSingle(guest)}
+                                disabled={isGenerating}
+                                className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 text-xs"
+                              >
+                                Generate
+                              </button>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
-                              onClick={() => handleGenerateSingle(guest)}
-                              disabled={isGenerating}
-                              className="text-purple-600 hover:text-purple-900 mr-4 disabled:opacity-50"
+                              onClick={() => handleEdit(guest)}
+                              disabled={deleteGuest.isPending}
+                              className="text-indigo-600 hover:text-indigo-900 mr-4 disabled:opacity-50"
                             >
-                              {generatedQR ? 'Regenerate QR' : 'Generate QR'}
+                              Edit
                             </button>
-                            {generatedQR && (
-                              <button
-                                onClick={() => downloadQR(generatedQR)}
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                Download
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleDelete(guest.ID!)}
+                              disabled={deleteGuest.isPending}
+                              className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            >
+                              {deleteGuest.isPending ? 'Removing...' : 'Remove'}
+                            </button>
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-              )}
-              {!isLoading && (!data?.Data || data.Data.length === 0) && (
-                <div className="text-center py-8 text-gray-500">
-                  No guests found for this event.
-                </div>
-              )}
-            </div>
-
-            {/* QR Code Gallery */}
-            {generatedQRs.length > 0 && (
-              <div>
-                <div className="mb-4 flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-gray-900">QR Code Gallery</h3>
-                  <p className="text-sm text-gray-500">
-                    {generatedQRs.length} QR code{generatedQRs.length !== 1 ? 's' : ''}{' '}
-                    generated
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {generatedQRs.map((qr) => (
-                    <div
-                      key={qr.guestId}
-                      className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
-                    >
-                      <div className="text-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={qr.qrImageUrl}
-                          alt={`QR Code for ${qr.guestName}`}
-                          className="w-full h-auto mb-3"
-                        />
-                        <div className="border-t pt-3">
-                          <h4 className="font-semibold text-gray-900">{qr.guestName}</h4>
-                          <p className="text-sm text-gray-600 mb-1">
-                            Guest ID: #{qr.guestId}
-                          </p>
-                          {qr.guestEmail && (
-                            <p className="text-xs text-gray-500 mb-1">{qr.guestEmail}</p>
-                          )}
-                          {qr.hotel && (
-                            <p className="text-xs text-gray-500">
-                              🏨 {qr.hotel}
-                              {qr.room && ` - Room ${qr.room}`}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-2">
-                            Generated: {new Date(qr.generatedAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => downloadQR(qr)}
-                          className="mt-3 w-full bg-purple-600 text-white px-3 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm"
-                        >
-                          Download PNG
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
+            {!isLoading && filteredGuests.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                {filterStatus === 'assigned'
+                  ? 'No assigned guests found.'
+                  : filterStatus === 'unassigned'
+                    ? 'No unassigned guests found.'
+                    : 'No guests found for this event. Add your first guest above.'}
+              </div>
+            )}
+          </div>
 
-            {/* Help Text */}
-            <div className="mt-8 bg-purple-50 border border-purple-200 rounded-md p-4">
-              <h4 className="text-sm font-semibold text-purple-900 mb-2">
-                How QR Codes Work
-              </h4>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>
-                  • Each QR code contains the guest&apos;s unique ID in JSON format:{' '}
-                  {`{"guestId": 123}`}
-                </li>
-                <li>
-                  • QR codes can be scanned at the check-in station to quickly find and
-                  check in guests
-                </li>
-                <li>
-                  • Use &quot;Generate All&quot; to create QR codes for all guests at
-                  once, or generate individually
-                </li>
-                <li>
-                  • Download individual QR codes or use &quot;Download All&quot; for bulk
-                  download
-                </li>
-                <li>• QR codes are generated client-side using the qrcode library</li>
-              </ul>
+          {/* Pagination Info */}
+          {data?.Pagination && (data.Pagination.TotalData ?? 0) > 0 && (
+            <div className="mt-4 text-sm text-gray-500 text-center">
+              Showing {filteredGuests.length} of {data.Pagination.TotalData} guests (Page{' '}
+              {data.Pagination.Page} of {data.Pagination.TotalPage})
             </div>
+          )}
+
+          {/* QR Code Gallery */}
+          {generatedQRs.length > 0 && (
+            <div className="mt-12">
+              <div className="mb-6 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                    <span className="text-2xl mr-2">📱</span>
+                    Generated QR Codes
+                  </h2>
+                  <p className="mt-1 text-gray-600">
+                    {generatedQRs.length} QR code{generatedQRs.length !== 1 ? 's' : ''}{' '}
+                    ready for download
+                  </p>
+                </div>
+                <button
+                  onClick={() => setGeneratedQRs([])}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {generatedQRs.map((qr) => (
+                  <div
+                    key={qr.guestId}
+                    className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+                  >
+                    <div className="text-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={qr.qrImageUrl}
+                        alt={`QR Code for ${qr.guestName}`}
+                        className="w-full h-auto mb-3"
+                      />
+                      <div className="border-t pt-3">
+                        <h4 className="font-semibold text-gray-900">{qr.guestName}</h4>
+                        <p className="text-sm text-gray-600 mb-1">
+                          Guest ID: #{qr.guestId}
+                        </p>
+                        {qr.guestEmail && (
+                          <p className="text-xs text-gray-500 mb-1">{qr.guestEmail}</p>
+                        )}
+                        {qr.hotel && (
+                          <p className="text-xs text-gray-500">
+                            🏨 {qr.hotel}
+                            {qr.room && ` - Room ${qr.room}`}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-2">
+                          Generated: {new Date(qr.generatedAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => downloadQR(qr)}
+                        className="mt-3 w-full bg-purple-600 text-white px-3 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm"
+                      >
+                        Download PNG
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Help Text */}
+          <div className="mt-8 bg-purple-50 border border-purple-200 rounded-md p-4">
+            <h4 className="text-sm font-semibold text-purple-900 mb-2">
+              💡 Guest Management Guide
+            </h4>
+            <ul className="text-sm text-purple-800 space-y-1">
+              <li>
+                • <strong>Assignments:</strong> Edit a guest to add hotel/room information
+                in the Custom Data field
+              </li>
+              <li>
+                • <strong>Status:</strong> Automatically tracks Unassigned → Assigned →
+                Checked In
+              </li>
+              <li>
+                • <strong>QR Codes:</strong> Generate individual codes or bulk generate
+                for all guests
+              </li>
+              <li>
+                • <strong>Filter:</strong> Use the filter dropdown to view only assigned
+                or unassigned guests
+              </li>
+              <li>
+                • Example Custom Data:{' '}
+                <code className="bg-purple-100 px-1 rounded">
+                  {`{"Hotel": "Grand Plaza", "Room": "101", "CheckInDate": "2025-01-15"}`}
+                </code>
+              </li>
+            </ul>
           </div>
         </div>
       </main>

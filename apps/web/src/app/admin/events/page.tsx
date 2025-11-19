@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { toast } from '@event-organizer/ui/components/toast';
+import { Modal } from '@event-organizer/ui';
+import { Button } from '@event-organizer/ui';
+import { AppShell } from '@/components/layout/app-shell';
 import {
   useEvents,
   useCreateEvent,
@@ -137,28 +139,7 @@ export default function EventsPage() {
   // };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-900">
-                  🎉 Event Organizer
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-500 hover:text-gray-700">
-                ← Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+    <AppShell>
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Manage Events</h1>
@@ -183,102 +164,94 @@ export default function EventsPage() {
           )}
 
           {/* Form Modal */}
-          {(showCreateForm || editingEvent) && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-                <div className="mt-3">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {editingEvent ? 'Edit Event' : 'Create New Event'}
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Event Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.EventName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, EventName: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter event name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Description
-                      </label>
-                      <textarea
-                        value={formData.Description}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Description: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter event description"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Hotels (comma-separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.Hotels}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Hotels: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g., Hotel A, Hotel B, Hotel C"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Rooms (comma-separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.Rooms}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Rooms: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g., Room 101, Room 102, Suite A"
-                      />
-                    </div>
-                    <div className="flex space-x-3 pt-4">
-                      <button
-                        onClick={editingEvent ? handleUpdate : handleCreate}
-                        disabled={
-                          (editingEvent
-                            ? updateEvent.isPending
-                            : createEvent.isPending) || !formData.EventName.trim()
-                        }
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {editingEvent
-                          ? updateEvent.isPending
-                            ? 'Updating...'
-                            : 'Update Event'
-                          : createEvent.isPending
-                            ? 'Creating...'
-                            : 'Create Event'}
-                      </button>
-                      <button
-                        onClick={resetForm}
-                        disabled={createEvent.isPending || updateEvent.isPending}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
+          <Modal
+            isOpen={showCreateForm || !!editingEvent}
+            onClose={resetForm}
+            title={editingEvent ? 'Edit Event' : 'Create New Event'}
+            footer={
+              <>
+                <Button variant="ghost" onClick={resetForm} disabled={createEvent.isPending || updateEvent.isPending}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={editingEvent ? handleUpdate : handleCreate}
+                  disabled={
+                    (editingEvent
+                      ? updateEvent.isPending
+                      : createEvent.isPending) || !formData.EventName.trim()
+                  }
+                >
+                  {editingEvent
+                    ? updateEvent.isPending
+                      ? 'Updating...'
+                      : 'Update Event'
+                    : createEvent.isPending
+                      ? 'Creating...'
+                      : 'Create Event'}
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Event Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.EventName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, EventName: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter event name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  value={formData.Description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Description: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter event description"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Hotels (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.Hotels}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Hotels: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Hotel A, Hotel B, Hotel C"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Rooms (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.Rooms}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Rooms: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Room 101, Room 102, Suite A"
+                />
               </div>
             </div>
-          )}
+          </Modal>
 
           {/* Events Table */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -375,8 +348,6 @@ export default function EventsPage() {
               {data.Pagination.Page} of {data.Pagination.TotalPage})
             </div>
           )}
-        </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

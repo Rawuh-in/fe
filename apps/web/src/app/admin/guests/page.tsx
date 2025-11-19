@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import QRCode from 'qrcode';
 import { toast } from '@event-organizer/ui/components/toast';
+import { Modal } from '@event-organizer/ui';
+import { Button } from '@event-organizer/ui';
+import { AppShell } from '@/components/layout/app-shell';
 import {
   useGuests,
   useEvents,
@@ -312,28 +314,7 @@ export default function GuestManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-900">
-                  🎉 Event Organizer
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-500 hover:text-gray-700">
-                ← Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+    <AppShell>
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Guest Management</h1>
@@ -462,105 +443,97 @@ export default function GuestManagementPage() {
           </div>
 
           {/* Form Modal */}
-          {(showCreateForm || editingGuest) && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-                <div className="mt-3">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {editingGuest ? 'Edit Guest' : 'Add New Guest'}
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.Name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Name: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="Guest full name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.Email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Email: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="guest@example.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.Phone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Phone: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="+1 234 567 8900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Custom Data (JSON)
-                      </label>
-                      <textarea
-                        value={formData.customData}
-                        onChange={(e) =>
-                          setFormData({ ...formData, customData: e.target.value })
-                        }
-                        rows={4}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
-                        placeholder='{"Hotel": "Hotel A", "Room": "101", "CheckInDate": "2025-01-15"}'
-                      />
-                      <small className="text-gray-500 text-xs">
-                        Add hotel, room, check-in dates, and other custom fields
-                      </small>
-                    </div>
-                    <div className="flex space-x-3 pt-4">
-                      <button
-                        onClick={editingGuest ? handleUpdate : handleCreate}
-                        disabled={
-                          (editingGuest
-                            ? updateGuest.isPending
-                            : createGuest.isPending) || !formData.Name.trim()
-                        }
-                        className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {editingGuest
-                          ? updateGuest.isPending
-                            ? 'Updating...'
-                            : 'Update Guest'
-                          : createGuest.isPending
-                            ? 'Adding...'
-                            : 'Add Guest'}
-                      </button>
-                      <button
-                        onClick={resetForm}
-                        disabled={createGuest.isPending || updateGuest.isPending}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
+          <Modal
+            isOpen={showCreateForm || !!editingGuest}
+            onClose={resetForm}
+            title={editingGuest ? 'Edit Guest' : 'Add New Guest'}
+            footer={
+              <>
+                <Button variant="ghost" onClick={resetForm} disabled={createGuest.isPending || updateGuest.isPending}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={editingGuest ? handleUpdate : handleCreate}
+                  disabled={
+                    (editingGuest
+                      ? updateGuest.isPending
+                      : createGuest.isPending) || !formData.Name.trim()
+                  }
+                >
+                  {editingGuest
+                    ? updateGuest.isPending
+                      ? 'Updating...'
+                      : 'Update Guest'
+                    : createGuest.isPending
+                      ? 'Adding...'
+                      : 'Add Guest'}
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.Name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Name: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Guest full name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.Email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Email: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="guest@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.Phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Phone: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="+1 234 567 8900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Custom Data (JSON)
+                </label>
+                <textarea
+                  value={formData.customData}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customData: e.target.value })
+                  }
+                  rows={4}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
+                  placeholder='{"Hotel": "Hotel A", "Room": "101", "CheckInDate": "2025-01-15"}'
+                />
+                <small className="text-gray-500 text-xs">
+                  Add hotel, room, check-in dates, and other custom fields
+                </small>
               </div>
             </div>
-          )}
+          </Modal>
 
           {/* Unified Guest Table */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -803,8 +776,6 @@ export default function GuestManagementPage() {
               </li>
             </ul>
           </div>
-        </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

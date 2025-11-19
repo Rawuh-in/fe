@@ -3,9 +3,39 @@
 import Link from 'next/link';
 import { useEvents, useUsers, parseEventOptions } from '@event-organizer/services';
 import { useAuth } from '../hooks/useAuth';
+import { AppShell } from '@/components/layout/app-shell';
+import { Skeleton } from '@event-organizer/ui';
+import clsx from 'clsx';
+
+function StatCard({ title, value, icon, colorClass, subtext }: {
+  title: string;
+  value: string | number;
+  icon: string;
+  colorClass: string;
+  subtext?: string;
+}) {
+  return (
+    <div className="bg-[var(--eo-bg-elevated)] p-6 rounded-[var(--eo-radius-lg)] shadow-[var(--eo-shadow-sm)] border border-[var(--eo-muted)] hover:shadow-[var(--eo-shadow-md)] transition-all duration-200">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-[var(--eo-muted-text)] uppercase tracking-wide">
+            {title}
+          </p>
+          <h3 className={clsx("mt-2 text-3xl font-bold", colorClass)}>
+            {value}
+          </h3>
+          {subtext && <p className="mt-1 text-xs text-[var(--eo-muted-text)]">{subtext}</p>}
+        </div>
+        <div className={clsx("p-3 rounded-full bg-opacity-10", colorClass.replace('text-', 'bg-'))}>
+          <span className={clsx("text-2xl", colorClass)}>{icon}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
-  const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: eventsData, isLoading: eventsLoading } = useEvents({
     limit: 10,
     sort: 'created_at',
@@ -52,280 +82,223 @@ export default function Dashboard() {
   const isLoading = eventsLoading || usersLoading;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-900">
-                  🎉 Event Organizer
-                </Link>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  href="/"
-                  className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/admin/events"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Events
-                </Link>
-                <Link
-                  href="/admin/users"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Users
-                </Link>
-                <Link
-                  href="/checkin"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Check-in
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={logout}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <AppShell>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[var(--eo-fg)]">
+          Event Organizer Dashboard
+        </h1>
+        <p className="mt-2 text-[var(--eo-muted-text)]">
+          Manage events, guests, and check-ins efficiently
+        </p>
+      </div>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Event Organizer Dashboard
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Manage events, guests, and check-ins efficiently
-            </p>
-          </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {isLoading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-[var(--eo-bg-elevated)] p-6 rounded-[var(--eo-radius-lg)] border border-[var(--eo-muted)]">
+                <Skeleton className="h-4 w-20 mb-3" />
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Events"
+              value={stats.events}
+              icon="📅"
+              colorClass="text-blue-600"
+            />
+            <StatCard
+              title="Staff Users"
+              value={stats.users}
+              icon="👥"
+              colorClass="text-green-600"
+            />
+            <StatCard
+              title="Guests"
+              value={stats.guests}
+              icon="🎫"
+              colorClass="text-purple-600"
+              subtext="Select event to view"
+            />
+            <StatCard
+              title="Assignments"
+              value={stats.assignments}
+              icon="🏨"
+              colorClass="text-orange-600"
+              subtext="In guest data"
+            />
+          </>
+        )}
+      </div>
 
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <span className="text-2xl">📅</span>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Events</h3>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {isLoading ? '...' : stats.events}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <span className="text-2xl">👥</span>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Staff Users</h3>
-                  <p className="text-3xl font-bold text-green-600">
-                    {isLoading ? '...' : stats.users}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <span className="text-2xl">🎫</span>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Guests</h3>
-                  <p className="text-3xl font-bold text-purple-600">{stats.guests}</p>
-                  <small className="text-xs text-gray-500">Select event to view</small>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <span className="text-2xl">🏨</span>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Assignments</h3>
-                  <p className="text-3xl font-bold text-orange-600">
-                    {stats.assignments}
-                  </p>
-                  <small className="text-xs text-gray-500">In guest data</small>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Recent Events */}
+      <div className="mb-6 flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-[var(--eo-fg)]">Recent Events</h2>
+        <Link
+          href="/admin/events"
+          className="bg-[var(--eo-primary)] text-white px-4 py-2 rounded-[var(--eo-radius-md)] hover:opacity-90 transition-opacity"
+        >
+          Manage Events
+        </Link>
+      </div>
 
-          {/* Recent Events */}
-          <div className="mb-6 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Events</h2>
-            <Link
-              href="/admin/events"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Manage Events
-            </Link>
-          </div>
-
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                <p className="mt-2 text-gray-500">Loading events...</p>
+      <div className="bg-[var(--eo-bg-elevated)] shadow-[var(--eo-shadow-sm)] overflow-hidden rounded-[var(--eo-radius-lg)] border border-[var(--eo-muted)]">
+        {isLoading ? (
+          <div className="space-y-4 p-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-4">
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-6 w-[250px]" />
+                  <Skeleton className="h-4 w-[350px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
               </div>
-            ) : (eventsData?.data || eventsData?.Data) &&
-              ((eventsData?.data?.length ?? 0) || (eventsData?.Data?.length ?? 0)) > 0 ? (
-              <ul className="divide-y divide-gray-200">
-                {(eventsData.data || eventsData.Data || []).map((event, index) => {
-                  const options = parseEventOptions(
-                    event.options || event.Options || '{}'
-                  );
-                  return (
-                    <li key={event.eventID || event.ID || index} className="px-6 py-4">
+            ))}
+          </div>
+        ) : (eventsData?.data || eventsData?.Data) &&
+          ((eventsData?.data?.length ?? 0) || (eventsData?.Data?.length ?? 0)) > 0 ? (
+          <ul className="divide-y divide-[var(--eo-muted)]">
+            {(eventsData.data || eventsData.Data || []).map((event, index) => {
+              const options = parseEventOptions(
+                event.options || event.Options || '{}'
+              );
+              return (
+                <li key={event.eventID || event.ID || index} className="px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="text-lg font-medium text-gray-900">
-                                {event.eventName || event.EventName}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                {event.description ||
-                                  event.Description ||
-                                  'No description'}
-                              </p>
-                              <div className="mt-2 flex space-x-4 text-sm text-gray-500">
-                                <span>{options.Hotels?.length || 0} hotels</span>
-                                <span>{options.Rooms?.length || 0} rooms</span>
-                                <span>
-                                  Created{' '}
-                                  {event.createdAt || event.CreatedAt
-                                    ? new Date(
-                                        (event.createdAt || event.CreatedAt)!
-                                      ).toLocaleDateString()
-                                    : '-'}
-                                </span>
-                              </div>
-                            </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-[var(--eo-fg)]">
+                            {event.eventName || event.EventName}
+                          </h3>
+                          <p className="text-sm text-[var(--eo-muted-text)]">
+                            {event.description ||
+                              event.Description ||
+                              'No description'}
+                          </p>
+                          <div className="mt-2 flex space-x-4 text-sm text-[var(--eo-muted-text)]">
+                            <span>{options.Hotels?.length || 0} hotels</span>
+                            <span>{options.Rooms?.length || 0} rooms</span>
+                            <span>
+                              Created{' '}
+                              {event.createdAt || event.CreatedAt
+                                ? new Date(
+                                    (event.createdAt || event.CreatedAt)!
+                                  ).toLocaleDateString()
+                                : '-'}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex space-x-3">
-                          <Link
-                            href={`/admin/guests`}
-                            className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors"
-                          >
-                            Guest Management
-                          </Link>
-                        </div>
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No events found. Create your first event!
-              </div>
-            )}
+                    </div>
+                    <div className="flex space-x-3">
+                      <Link
+                        href={`/admin/guests`}
+                        className="bg-purple-600 text-white px-3 py-1 rounded-[var(--eo-radius-sm)] text-sm hover:bg-purple-700 transition-colors"
+                      >
+                        Guest Management
+                      </Link>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="text-center py-8 text-[var(--eo-muted-text)]">
+            No events found. Create your first event!
           </div>
+        )}
+      </div>
 
-          {/* Quick Action Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            <Link
-              href="/admin/events"
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
-                    Manage Events
-                  </h3>
-                  <p className="mt-1 text-gray-600">
-                    Create and configure events with hotels/rooms
-                  </p>
-                </div>
-                <span className="text-3xl">📅</span>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/users"
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600">
-                    Manage Staff Users
-                  </h3>
-                  <p className="mt-1 text-gray-600">
-                    Add system administrators and staff
-                  </p>
-                </div>
-                <span className="text-3xl">👥</span>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/guests"
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600">
-                    Guest Management
-                  </h3>
-                  <p className="mt-1 text-gray-600">
-                    Manage guests, assignments, and QR codes
-                  </p>
-                </div>
-                <span className="text-3xl">🎫</span>
-              </div>
-            </Link>
-
-            <Link
-              href="/checkin"
-              className="bg-white p-6 rounded-lg shadow-sm border-2 border-teal-200 hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600">
-                    QR Check-in Station
-                  </h3>
-                  <p className="mt-1 text-gray-600">Scan QR codes for guest check-in</p>
-                </div>
-                <span className="text-3xl">✅</span>
-              </div>
-            </Link>
-
-            <Link
-              href="/checkout"
-              className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-lg shadow-sm border-2 border-orange-300 hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600">
-                    QR Check-out Station
-                  </h3>
-                  <p className="mt-1 text-gray-600">Scan QR codes for guest check-out</p>
-                </div>
-                <span className="text-3xl">🚪</span>
-              </div>
-            </Link>
+      {/* Quick Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        <Link
+          href="/admin/events"
+          className="bg-[var(--eo-bg-elevated)] p-6 rounded-[var(--eo-radius-lg)] shadow-[var(--eo-shadow-sm)] border border-[var(--eo-muted)] hover:shadow-[var(--eo-shadow-md)] transition-shadow group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--eo-fg)] group-hover:text-[var(--eo-primary)]">
+                Manage Events
+              </h3>
+              <p className="mt-1 text-[var(--eo-muted-text)]">
+                Create and configure events with hotels/rooms
+              </p>
+            </div>
+            <span className="text-3xl">📅</span>
           </div>
-        </div>
-      </main>
-    </div>
+        </Link>
+
+        <Link
+          href="/admin/users"
+          className="bg-[var(--eo-bg-elevated)] p-6 rounded-[var(--eo-radius-lg)] shadow-[var(--eo-shadow-sm)] border border-[var(--eo-muted)] hover:shadow-[var(--eo-shadow-md)] transition-shadow group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--eo-fg)] group-hover:text-green-600">
+                Manage Staff Users
+              </h3>
+              <p className="mt-1 text-[var(--eo-muted-text)]">
+                Add system administrators and staff
+              </p>
+            </div>
+            <span className="text-3xl">👥</span>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/guests"
+          className="bg-[var(--eo-bg-elevated)] p-6 rounded-[var(--eo-radius-lg)] shadow-[var(--eo-shadow-sm)] border border-[var(--eo-muted)] hover:shadow-[var(--eo-shadow-md)] transition-shadow group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--eo-fg)] group-hover:text-purple-600">
+                Guest Management
+              </h3>
+              <p className="mt-1 text-[var(--eo-muted-text)]">
+                Manage guests, assignments, and QR codes
+              </p>
+            </div>
+            <span className="text-3xl">🎫</span>
+          </div>
+        </Link>
+
+        <Link
+          href="/checkin"
+          className="bg-[var(--eo-bg-elevated)] p-6 rounded-[var(--eo-radius-lg)] shadow-[var(--eo-shadow-sm)] border-2 border-teal-200 hover:shadow-[var(--eo-shadow-md)] transition-shadow group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--eo-fg)] group-hover:text-teal-600">
+                QR Check-in Station
+              </h3>
+              <p className="mt-1 text-[var(--eo-muted-text)]">Scan QR codes for guest check-in</p>
+            </div>
+            <span className="text-3xl">✅</span>
+          </div>
+        </Link>
+
+        <Link
+          href="/checkout"
+          className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-[var(--eo-radius-lg)] shadow-[var(--eo-shadow-sm)] border-2 border-orange-300 hover:shadow-[var(--eo-shadow-md)] transition-shadow group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--eo-fg)] group-hover:text-orange-600">
+                QR Check-out Station
+              </h3>
+              <p className="mt-1 text-[var(--eo-muted-text)]">Scan QR codes for guest check-out</p>
+            </div>
+            <span className="text-3xl">🚪</span>
+          </div>
+        </Link>
+      </div>
+    </AppShell>
   );
 }

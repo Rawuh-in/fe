@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { toast } from '@event-organizer/ui/components/toast';
+import { Modal } from '@event-organizer/ui';
+import { Button } from '@event-organizer/ui';
+import { AppShell } from '@/components/layout/app-shell';
 import {
   useUsers,
   useCreateUser,
@@ -117,28 +119,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-900">
-                  🎉 Event Organizer
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-500 hover:text-gray-700">
-                ← Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+    <AppShell>
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
@@ -165,139 +146,131 @@ export default function UsersPage() {
           )}
 
           {/* Form Modal */}
-          {(showCreateForm || editingUser) && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-                <div className="mt-3">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {editingUser ? 'Edit User' : 'Create New User'}
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.Name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Name: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Full name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.Email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Email: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="user@example.com"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Username *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.Username}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Username: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="username"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Password {editingUser ? '(leave empty to keep current)' : '*'}
-                      </label>
-                      <input
-                        type="password"
-                        value={formData.Password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, Password: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder={
-                          editingUser
-                            ? 'Leave empty to keep current password'
-                            : 'Password'
-                        }
-                        required={!editingUser}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        User Type *
-                      </label>
-                      <select
-                        value={formData.UserType}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            UserType: e.target.value as 'SYSTEM_ADMIN' | 'PROJECT_USER',
-                          })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="PROJECT_USER">Project User</option>
-                        <option value="SYSTEM_ADMIN">System Admin</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Event ID (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.EventId}
-                        onChange={(e) =>
-                          setFormData({ ...formData, EventId: e.target.value })
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="1"
-                      />
-                    </div>
-                    <div className="flex space-x-3 pt-4">
-                      <button
-                        onClick={editingUser ? handleUpdate : handleCreate}
-                        disabled={
-                          editingUser ? updateUser.isPending : createUser.isPending
-                        }
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {editingUser
-                          ? updateUser.isPending
-                            ? 'Updating...'
-                            : 'Update User'
-                          : createUser.isPending
-                            ? 'Creating...'
-                            : 'Create User'}
-                      </button>
-                      <button
-                        onClick={resetForm}
-                        disabled={createUser.isPending || updateUser.isPending}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
+          <Modal
+            isOpen={showCreateForm || !!editingUser}
+            onClose={resetForm}
+            title={editingUser ? 'Edit User' : 'Create New User'}
+            footer={
+              <>
+                <Button variant="ghost" onClick={resetForm} disabled={createUser.isPending || updateUser.isPending}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={editingUser ? handleUpdate : handleCreate}
+                  disabled={
+                    editingUser ? updateUser.isPending : createUser.isPending
+                  }
+                >
+                  {editingUser
+                    ? updateUser.isPending
+                      ? 'Updating...'
+                      : 'Update User'
+                    : createUser.isPending
+                      ? 'Creating...'
+                      : 'Create User'}
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.Name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Name: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Full name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={formData.Email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Email: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="user@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  value={formData.Username}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Username: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="username"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Password {editingUser ? '(leave empty to keep current)' : '*'}
+                </label>
+                <input
+                  type="password"
+                  value={formData.Password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, Password: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={
+                    editingUser
+                      ? 'Leave empty to keep current password'
+                      : 'Password'
+                  }
+                  required={!editingUser}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  User Type *
+                </label>
+                <select
+                  value={formData.UserType}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      UserType: e.target.value as 'SYSTEM_ADMIN' | 'PROJECT_USER',
+                    })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="PROJECT_USER">Project User</option>
+                  <option value="SYSTEM_ADMIN">System Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Event ID (optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.EventId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, EventId: e.target.value })
+                  }
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="1"
+                />
               </div>
             </div>
-          )}
+          </Modal>
 
           {/* Users Table */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -405,8 +378,6 @@ export default function UsersPage() {
               {data.Pagination.Page} of {data.Pagination.TotalPage})
             </div>
           )}
-        </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

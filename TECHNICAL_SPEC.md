@@ -356,6 +356,16 @@ export function useCreateEvent() {
 
 ## 2.6 ERROR HANDLING PATTERNS
 
+### Automatic 401 Unauthorized Handling
+
+The `apiClient` in `packages/services/src/index.ts` automatically handles expired or invalid auth tokens:
+
+- When any API call returns **401 Unauthorized**, the client:
+  1. Clears the invalid token from `localStorage`
+  2. Redirects the user to `/login`
+
+This is implemented via ky's `afterResponse` hook and runs globally for all API calls.
+
 ### API Error Handling
 
 ```typescript
@@ -420,6 +430,8 @@ toast.error('Something went wrong');
 - [ ] **CSS tokens MUST use `--eo-` prefix** - Defined in `packages/ui/src/tokens.css`
 - [ ] **Color values in Tailwind MUST use `[color:var(--eo-*)]` syntax** - Not `bg-[var(--eo-*)]`
 - [ ] **Auth token stored in localStorage key `authToken`** - Used by API interceptor
+- [ ] **401 responses trigger automatic redirect to `/login`** - Token is cleared and user redirected
+- [ ] **Landing page auth links check token first** - Navigate to `/dashboard` if logged in, `/login` if not
 - [ ] **Components in `packages/ui` MUST NOT contain business logic** - Only presentation
 - [ ] **Zod schemas use `.passthrough()`** - Backend may return additional fields
 

@@ -133,6 +133,8 @@ export function Component({ className, variant = 'primary', ...props }: Componen
 - [ ] CSS tokens use `--eo-` prefix (e.g., `--eo-primary`)
 - [ ] Colors in Tailwind use `[color:var(--eo-*)]` — NOT `bg-[var(--eo-*)]`
 - [ ] Auth token key is `authToken` in localStorage
+- [ ] 401 API responses auto-redirect to `/login` (token is cleared automatically)
+- [ ] Landing page "Sign In" / "Get Started" buttons check token first (→ dashboard if logged in)
 - [ ] UI components in `packages/ui` contain NO business logic
 - [ ] Zod schemas MUST use `.passthrough()` for backend flexibility
 - [ ] Backend returns PascalCase fields (`EventName`, `ID`) — schemas accept both

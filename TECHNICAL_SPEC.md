@@ -273,7 +273,8 @@ import { useAuth } from '../hooks/useAuth';
     "./tokens.css": "./src/tokens.css",
     "./components/button": "./src/components/button.tsx",
     "./components/badge": "./src/components/badge.tsx",
-    "./components/toast": "./src/components/toast.tsx"
+    "./components/toast": "./src/components/toast.tsx",
+    "./components/header": "./src/components/header.tsx"
   }
 }
 ```

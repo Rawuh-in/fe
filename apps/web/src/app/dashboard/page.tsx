@@ -8,6 +8,7 @@ import {
   type Event,
 } from '@event-organizer/services';
 import { useAuth } from '../../hooks/useAuth';
+import { Header } from '@event-organizer/ui';
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
@@ -56,55 +57,36 @@ export default function Dashboard() {
 
   const isLoading = eventsLoading || usersLoading;
 
+  const dashboardLinks = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Guest Site', href: '/guest' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-900">
-                  🎉 Event Organizer
-                </Link>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  href="/"
-                  className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/admin/events"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Events
-                </Link>
-                <Link
-                  href="/admin/users"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Users
-                </Link>
-                <Link
-                  href="/checkin"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Check-in
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={logout}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header
+        links={dashboardLinks}
+        action={
+          <button
+            className="flex items-center justify-center gap-2 bg-[#2E3192] text-white rounded-lg hover:bg-[#2f2f7a] transition-colors px-5 py-2.5 text-sm font-[590]"
+            style={{ fontFamily: 'SF Pro, sans-serif' }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z"
+                fill="currentColor"
+              />
+            </svg>
+            Name A
+          </button>
+        }
+      />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

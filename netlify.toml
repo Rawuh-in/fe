@@ -5,6 +5,7 @@ publish = "apps/web/.next"
 [build.environment]
 NEXT_TELEMETRY_DISABLED = "1"
 NODE_VERSION = "20"
+BUN_VERSION = "1.1.0"
 HUSKY = "0"
 
 [[plugins]]

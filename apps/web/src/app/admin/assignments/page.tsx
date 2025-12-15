@@ -2,7 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useEvents, useGuests, parseGuestOptions } from '@event-organizer/services';
+import {
+  useEvents,
+  useGuests,
+  parseGuestOptions,
+  type Guest,
+  type Event,
+} from '@event-organizer/services';
 
 export default function AssignmentsPage() {
   const [selectedEventId, setSelectedEventId] = useState(1);
@@ -16,9 +22,8 @@ export default function AssignmentsPage() {
     dir: 'asc',
   });
 
-  // Extract assignment data from Guest Options
   const assignmentsWithGuests =
-    guestsData?.Data?.map((guest) => {
+    guestsData?.Data?.map((guest: Guest) => {
       const options = parseGuestOptions(guest.Options || '{}');
       return {
         guest,
@@ -145,7 +150,7 @@ export default function AssignmentsPage() {
                 onChange={(e) => setSelectedEventId(Number(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
-                {eventsData?.Data?.map((event) => (
+                {eventsData?.Data?.map((event: Event) => (
                   <option key={event.ID} value={event.ID}>
                     {event.EventName}
                   </option>
@@ -166,7 +171,7 @@ export default function AssignmentsPage() {
                 <option value="unassigned">Unassigned Only</option>
               </select>
               <Link
-                href="/admin/participants"
+                href="/admin/guests"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
               >
                 Edit Assignments →
@@ -275,7 +280,7 @@ export default function AssignmentsPage() {
               </li>
               <li>
                 • To assign a guest: Go to{' '}
-                <Link href="/admin/participants" className="underline font-medium">
+                <Link href="/admin/guests" className="underline font-medium">
                   Manage Guests
                 </Link>{' '}
                 and edit their custom data

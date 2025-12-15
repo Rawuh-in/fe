@@ -9,6 +9,7 @@ import {
   parseGuestOptions,
   stringifyGuestOptions,
   type Guest,
+  type Event,
 } from '@event-organizer/services';
 
 export default function CheckOutPage() {
@@ -66,7 +67,7 @@ export default function CheckOutPage() {
       return;
     }
 
-    const guest = guestsData?.Data?.find((g) => g.ID === guestId);
+    const guest = guestsData?.Data?.find((g: Guest) => g.ID === guestId);
 
     if (guest) {
       handleCheckOut(guest);
@@ -88,7 +89,7 @@ export default function CheckOutPage() {
           const mockQrData = `{"guestId": ${guestsData?.Data?.[0]?.ID || 1}}`;
           const parsed = JSON.parse(mockQrData);
 
-          const guest = guestsData?.Data?.find((g) => g.ID === parsed.guestId);
+          const guest = guestsData?.Data?.find((g: Guest) => g.ID === parsed.guestId);
 
           if (guest) {
             handleCheckOut(guest);
@@ -106,13 +107,13 @@ export default function CheckOutPage() {
 
   // Calculate stats
   const checkedInGuests =
-    guestsData?.Data?.filter((guest) => {
+    guestsData?.Data?.filter((guest: Guest) => {
       const options = parseGuestOptions(guest.Options || '{}');
       return options.CheckedInAt && !options.CheckedOutAt;
     }) || [];
 
   const checkedOutGuests =
-    guestsData?.Data?.filter((guest) => {
+    guestsData?.Data?.filter((guest: Guest) => {
       const options = parseGuestOptions(guest.Options || '{}');
       return options.CheckedOutAt;
     }) || [];
@@ -202,7 +203,7 @@ export default function CheckOutPage() {
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               >
-                {eventsData?.Data?.map((event) => (
+                {eventsData?.Data?.map((event: Event) => (
                   <option key={event.ID} value={event.ID}>
                     {event.EventName}
                   </option>
@@ -399,7 +400,7 @@ export default function CheckOutPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {guestsData?.Data?.map((guest) => {
+                  {guestsData?.Data?.map((guest: Guest) => {
                     const options = parseGuestOptions(guest.Options || '{}');
                     const status = getGuestStatus(guest);
 

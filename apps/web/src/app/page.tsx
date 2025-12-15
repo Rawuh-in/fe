@@ -1,7 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEvents, useUsers, parseEventOptions } from '@event-organizer/services';
+import {
+  useEvents,
+  useUsers,
+  parseEventOptions,
+  type Event,
+} from '@event-organizer/services';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Dashboard() {
@@ -188,51 +193,53 @@ export default function Dashboard() {
             ) : (eventsData?.data || eventsData?.Data) &&
               ((eventsData?.data?.length ?? 0) || (eventsData?.Data?.length ?? 0)) > 0 ? (
               <ul className="divide-y divide-gray-200">
-                {(eventsData.data || eventsData.Data || []).map((event, index) => {
-                  const options = parseEventOptions(
-                    event.options || event.Options || '{}'
-                  );
-                  return (
-                    <li key={event.eventID || event.ID || index} className="px-6 py-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="text-lg font-medium text-gray-900">
-                                {event.eventName || event.EventName}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                {event.description ||
-                                  event.Description ||
-                                  'No description'}
-                              </p>
-                              <div className="mt-2 flex space-x-4 text-sm text-gray-500">
-                                <span>{options.Hotels?.length || 0} hotels</span>
-                                <span>{options.Rooms?.length || 0} rooms</span>
-                                <span>
-                                  Created{' '}
-                                  {event.createdAt || event.CreatedAt
-                                    ? new Date(
-                                        (event.createdAt || event.CreatedAt)!
-                                      ).toLocaleDateString()
-                                    : '-'}
-                                </span>
+                {(eventsData.data || eventsData.Data || []).map(
+                  (event: Event, index: number) => {
+                    const options = parseEventOptions(
+                      event.options || event.Options || '{}'
+                    );
+                    return (
+                      <li key={event.eventID || event.ID || index} className="px-6 py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="text-lg font-medium text-gray-900">
+                                  {event.eventName || event.EventName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {event.description ||
+                                    event.Description ||
+                                    'No description'}
+                                </p>
+                                <div className="mt-2 flex space-x-4 text-sm text-gray-500">
+                                  <span>{options.Hotels?.length || 0} hotels</span>
+                                  <span>{options.Rooms?.length || 0} rooms</span>
+                                  <span>
+                                    Created{' '}
+                                    {event.createdAt || event.CreatedAt
+                                      ? new Date(
+                                          (event.createdAt || event.CreatedAt)!
+                                        ).toLocaleDateString()
+                                      : '-'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
+                          <div className="flex space-x-3">
+                            <Link
+                              href={`/admin/guests`}
+                              className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors"
+                            >
+                              Guest Management
+                            </Link>
+                          </div>
                         </div>
-                        <div className="flex space-x-3">
-                          <Link
-                            href={`/admin/guests`}
-                            className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors"
-                          >
-                            Guest Management
-                          </Link>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  }
+                )}
               </ul>
             ) : (
               <div className="text-center py-8 text-gray-500">

@@ -337,7 +337,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data?.Data?.map((user) => (
+                  {data?.Data?.map((user: User) => (
                     <tr key={user.ID}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         #{user.ID}

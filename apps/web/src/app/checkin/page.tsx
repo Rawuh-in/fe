@@ -9,6 +9,7 @@ import {
   parseGuestOptions,
   stringifyGuestOptions,
   type Guest,
+  type Event,
 } from '@event-organizer/services';
 
 export default function CheckInPage() {
@@ -60,7 +61,7 @@ export default function CheckInPage() {
       return;
     }
 
-    const guest = guestsData?.Data?.find((g) => g.ID === guestId);
+    const guest = guestsData?.Data?.find((g: Guest) => g.ID === guestId);
 
     if (guest) {
       handleCheckIn(guest);
@@ -82,7 +83,7 @@ export default function CheckInPage() {
           const mockQrData = `{"guestId": ${guestsData?.Data?.[0]?.ID || 1}}`;
           const parsed = JSON.parse(mockQrData);
 
-          const guest = guestsData?.Data?.find((g) => g.ID === parsed.guestId);
+          const guest = guestsData?.Data?.find((g: Guest) => g.ID === parsed.guestId);
 
           if (guest) {
             handleCheckIn(guest);
@@ -122,7 +123,8 @@ export default function CheckInPage() {
   };
 
   const checkedInCount =
-    guestsData?.Data?.filter((g) => getCheckInStatus(g) === 'checked_in').length || 0;
+    guestsData?.Data?.filter((g: Guest) => getCheckInStatus(g) === 'checked_in').length ||
+    0;
   const totalCount = guestsData?.Data?.length || 0;
 
   return (
@@ -162,7 +164,7 @@ export default function CheckInPage() {
                 onChange={(e) => setSelectedEventId(Number(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
-                {eventsData?.Data?.map((event) => (
+                {eventsData?.Data?.map((event: Event) => (
                   <option key={event.ID} value={event.ID}>
                     {event.EventName}
                   </option>
@@ -289,7 +291,7 @@ export default function CheckInPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {guestsData?.Data?.map((guest) => {
+                  {guestsData?.Data?.map((guest: Guest) => {
                     const status = getCheckInStatus(guest);
                     const checkInTime = getCheckInTime(guest);
                     return (

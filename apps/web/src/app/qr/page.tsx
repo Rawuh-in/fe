@@ -8,6 +8,7 @@ import {
   useGuests,
   parseGuestOptions,
   type Guest,
+  type Event,
 } from '@event-organizer/services';
 
 interface GeneratedQR {
@@ -89,7 +90,7 @@ export default function QRManagementPage() {
     setIsGenerating(true);
     try {
       const qrs = await Promise.all(
-        guestsData.Data.map((guest) => generateQRForGuest(guest))
+        guestsData.Data.map((guest: Guest) => generateQRForGuest(guest))
       );
       setGeneratedQRs(qrs);
     } catch (err) {
@@ -179,7 +180,7 @@ export default function QRManagementPage() {
                     }}
                     className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
-                    {eventsData?.Data?.map((event) => (
+                    {eventsData?.Data?.map((event: Event) => (
                       <option key={event.ID} value={event.ID}>
                         {event.EventName}
                       </option>
@@ -270,7 +271,7 @@ export default function QRManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {guestsData?.Data?.map((guest) => {
+                  {guestsData?.Data?.map((guest: Guest) => {
                     const options = parseGuestOptions(guest.Options || '{}');
                     const generatedQR = getGeneratedQR(guest.ID!);
 
@@ -328,10 +329,7 @@ export default function QRManagementPage() {
             {!isLoading && (!guestsData?.Data || guestsData.Data.length === 0) && (
               <div className="text-center py-8 text-gray-500">
                 No guests found for this event.{' '}
-                <Link
-                  href="/admin/participants"
-                  className="text-blue-600 hover:underline"
-                >
+                <Link href="/admin/guests" className="text-blue-600 hover:underline">
                   Add guests
                 </Link>
               </div>

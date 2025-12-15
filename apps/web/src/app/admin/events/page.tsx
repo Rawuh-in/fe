@@ -315,7 +315,7 @@ export default function EventsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data?.Data?.map((event) => {
+                  {data?.Data?.map((event: Event) => {
                     const options = parseEventOptions(event.Options || '{}');
                     return (
                       <tr key={event.ID}>

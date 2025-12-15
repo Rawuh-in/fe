@@ -15,9 +15,13 @@
     "moduleDetection": "force",
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
     "paths": {
+      "@event-organizer/ui": ["packages/ui/src/index.ts"],
       "@event-organizer/ui/*": ["packages/ui/src/*"],
+      "@event-organizer/config": ["packages/config/src/index.ts"],
       "@event-organizer/config/*": ["packages/config/src/*"],
+      "@event-organizer/services": ["packages/services/src/index.ts"],
       "@event-organizer/services/*": ["packages/services/src/*"]
     }
   },

@@ -13,6 +13,7 @@ import {
   parseGuestOptions,
   stringifyGuestOptions,
   type Guest,
+  type Event,
   type GuestCustomData,
 } from '@event-organizer/services';
 
@@ -193,9 +194,8 @@ export default function GuestManagementPage() {
     }
   };
 
-  // Filter guests based on assignment status
   const filteredGuests =
-    data?.Data?.filter((guest) => {
+    data?.Data?.filter((guest: Guest) => {
       const assignment = getGuestAssignment(guest);
       if (filterStatus === 'assigned') {
         return assignment.hotel || assignment.room;
@@ -208,11 +208,12 @@ export default function GuestManagementPage() {
   const stats = {
     total: data?.Data?.length || 0,
     assigned:
-      data?.Data?.filter((g) => {
+      data?.Data?.filter((g: Guest) => {
         const a = getGuestAssignment(g);
         return a.hotel || a.room;
       }).length || 0,
-    checkedIn: data?.Data?.filter((g) => getGuestAssignment(g).checkedInAt).length || 0,
+    checkedIn:
+      data?.Data?.filter((g: Guest) => getGuestAssignment(g).checkedInAt).length || 0,
     qrGenerated: generatedQRs.length,
   };
 
@@ -275,7 +276,7 @@ export default function GuestManagementPage() {
     setIsGenerating(true);
     try {
       const qrs = await Promise.all(
-        filteredGuests.map((guest) => generateQRForGuest(guest))
+        filteredGuests.map((guest: Guest) => generateQRForGuest(guest))
       );
       setGeneratedQRs(qrs);
       toast.success(`Generated ${qrs.length} QR codes successfully`);
@@ -350,7 +351,7 @@ export default function GuestManagementPage() {
                 }}
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
               >
-                {eventsData?.Data?.map((event) => (
+                {eventsData?.Data?.map((event: Event) => (
                   <option key={event.ID} value={event.ID}>
                     {event.EventName}
                   </option>
@@ -604,7 +605,7 @@ export default function GuestManagementPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredGuests.map((guest) => {
+                    {filteredGuests.map((guest: Guest) => {
                       const assignment = getGuestAssignment(guest);
                       const status = getCheckInStatus(guest);
                       const generatedQR = getGeneratedQR(guest.ID!);

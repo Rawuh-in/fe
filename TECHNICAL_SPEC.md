@@ -39,6 +39,8 @@ Event Organizer is a monorepo-based event management console built for handling 
 │       ├── src/
 │       │   ├── app/                  → App Router pages (page.tsx, layout.tsx)
 │       │   │   ├── admin/            → Admin routes (events/, guests/, users/)
+│       │   │   ├── dashboard/        → Main dashboard
+│       │   │   ├── landing/          → Public landing page
 │       │   │   ├── providers/        → Client-side providers (kebab-case .tsx)
 │       │   │   ├── login/            → Auth pages
 │       │   │   ├── checkin/          → Feature pages

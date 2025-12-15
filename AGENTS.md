@@ -55,6 +55,8 @@ See `TECHNICAL_SPEC.md` for full architecture, patterns, and extension recipes.
 apps/web/src/
 ├── app/              → Next.js App Router pages (page.tsx, layout.tsx)
 │   ├── admin/        → Admin routes (events/, guests/, users/)
+│   ├── dashboard/    → Main dashboard
+│   ├── landing/      → Public landing page
 │   ├── providers/    → Client-side providers ("use client" wrappers)
 │   └── hooks/        → App-specific hooks (useAuth.ts)
 └── public/           → Static assets

@@ -19,7 +19,7 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('authToken');
       if (token) {
-        router.push('/');
+        router.push('/dashboard');
       }
     }
   }, [router]);
@@ -36,7 +36,7 @@ export default function LoginPage() {
     try {
       await login.mutateAsync({ username, password });
       // On success, redirect to dashboard
-      router.push('/');
+      router.push('/dashboard');
     } catch (err: unknown) {
       console.error('Login error:', err);
       const errorMessage =

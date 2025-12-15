@@ -2,8 +2,21 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
+  const router = useRouter();
+
+  // Check if user is authenticated and navigate accordingly
+  const handleAuthNavigation = () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      router.push('/dashboard');
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-hidden font-sans">
       {/* Background decorative elements - Soft blurs for the "glow" effect */}
@@ -53,12 +66,12 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <Link
-            href="/login"
-            className="px-6 py-2.5 text-sm font-semibold rounded-lg bg-[#3b3b98] text-white hover:bg-[#2f2f7a] transition-colors shadow-md shadow-indigo-200"
+          <button
+            onClick={handleAuthNavigation}
+            className="px-6 py-2.5 text-sm font-semibold rounded-lg bg-[#3b3b98] text-white hover:bg-[#2f2f7a] transition-colors shadow-md shadow-indigo-200 cursor-pointer"
           >
             Sign In
-          </Link>
+          </button>
         </nav>
 
         {/* Hero Section */}
@@ -76,12 +89,12 @@ export default function LandingPage() {
             </h1>
 
             <div className="pt-4 flex justify-center lg:justify-start">
-              <Link
-                href="/login"
-                className="px-8 py-4 rounded-lg bg-[#3b3b98] text-white font-semibold text-lg hover:bg-[#2f2f7a] transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5"
+              <button
+                onClick={handleAuthNavigation}
+                className="px-8 py-4 rounded-lg bg-[#3b3b98] text-white font-semibold text-lg hover:bg-[#2f2f7a] transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
               >
                 Get Started
-              </Link>
+              </button>
             </div>
           </div>
 

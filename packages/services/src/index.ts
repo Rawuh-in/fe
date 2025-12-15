@@ -244,6 +244,26 @@ export const apiClient: KyInstance = ky.create({
         }
       },
     ],
+    afterResponse: [
+      async (_request, _options, response) => {
+        // Handle 401 Unauthorized - token expired or invalid
+        if (response.status === 401) {
+          console.warn('Received 401 Unauthorized - token may be expired');
+
+          if (typeof window !== 'undefined') {
+            // Clear the invalid/expired token
+            localStorage.removeItem('authToken');
+
+            // Only redirect if not already on login page to avoid redirect loop
+            if (!window.location.pathname.includes('/login')) {
+              console.log('Redirecting to login page...');
+              window.location.href = '/login';
+            }
+          }
+        }
+        return response;
+      },
+    ],
   },
 });
 
